@@ -37,14 +37,14 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 - [x] 편집기 바인더 디자인 + 인덱스 탭(사진/문구/꾸미기/템플릿) + 모바일 배치
 - [x] 감성 사진 틀 → 폴라로이드, 단색 스킨 + 색상 팔레트, 스티커 구멍 메움 (2026-09-26 시안 컨펌 후 반영)
 - [x] 폰트 용량 축소: 1.1MB → 첫 로딩 약 194KB (core/rare 분할, 드문 한글은 필요할 때만)
-- [x] 브라우저 E2E를 저장소에 추가 (`e2e/`, `npm run test:e2e`, 9 스위트 123 시나리오)
+- [x] 브라우저 E2E를 저장소에 추가 (`e2e/`, `npm run test:e2e`, 10 스위트 134 시나리오)
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude 디자인 캔버스, 비공개 — 링크는 저장소에 남기지 않음)
 
 
 ## In Progress
 
-- 없음 (다음은 `Next`의 4번부터)
+- 없음 (남은 것: `Next`의 17번 실제 기기 확인, 19번 공개 배포)
 
 
 ## Next
@@ -67,9 +67,11 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 14. ~~browser persistence 구현~~ (완료, IndexedDB)
 15. ~~JSON export/import 구현~~ (완료)
 16. ~~TEST_CASES 실행~~ (TC-01~30 자동 브라우저 테스트로 확인, 아래 Test Status)
-17. 반응형 및 접근성 정리 — 320/375/768/1024px 가로 넘침 없음, 탭 키보드 조작, 사용자 글꼴 강제 확인. 실제 기기(iOS Safari, Samsung Internet) 확인 남음
+17. 반응형 및 접근성 정리 — 320/375/768/1024px 가로 넘침 없음, 탭 키보드 조작, 사용자 글꼴 강제 확인 (자동 테스트 완료).
+    실제 기기(iOS Safari, Samsung Internet, Android Chrome) 확인 남음
 18. ~~production build~~ (PASS)
-19. 공개 배포 — 남음 (배포 전: 스티커 라이선스 확인, 폰트 용량 검토)
+19. 공개 배포 — 보류 (사용자 결정). 배포 전 확인 사항 중 스티커 출처(사용자 AI 제작, `### 20`)와
+    폰트 용량 축소(`### 19`)는 완료. 배포 시 CSP 헤더 추가 (`### 21`)
 
 
 ## Important Technical Decisions
@@ -292,13 +294,12 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
   - `memo` → **감성 사진**: 뽀샤시 사진 + 흰 여백 + 작은 회색 픽셀 문구 + 디카 날짜 스탬프 (1:1 시안)
   - `minihome` → **미니홈피**: 바인더, 왼쪽 프로필 칸(TODAY is.. 기분·소개글·닉네임), BGM 박스, 인덱스 탭 (4:5 시안)
   - `album` → **사진첩 게시물**: [사진첩] 제목, 날짜·시각, 퍼가기/댓글 줄 (9:16 시안)
-  - `diary` → 다이어리 (시안 미작성)
+  - `diary` → 다이어리 (별도 시안 없이 구현: 줄 노트 + 살짝 기울인 사진 + 마스킹테이프)
 - 스티커 (v7, 확정): **사용자 "스티커 참고용" 시안 이미지의 원본을 그대로 잘라 쓴다.** 새로 그리지 않는다.
   - 원본 webp(투명 배경)를 알파 기준 연결요소로 분리 → 32종 PNG (`public/stickers/<id>.png`, 약 0.9MB)
   - `src/editor/stickerAssets.ts` = manifest(id, 한글 이름, 원본 크기). `sticker.kind` = 에셋 id. 색(tint) 개념 없음
   - 렌더: 원본 이미지를 `imageSmoothingEnabled=false`로 확대·회전 (도트 유지). `useStickerImages`가 카드에 쓰인 종류만 로드
   - 시안 `Sticker.dc.html`도 같은 PNG를 에셋으로 올려 사용
-  - 추가/선택/드래그 UI는 아직 미구현
 - 특수문자 감성: 카드 문구에 `˚ ｡ · * ･ﾟ ｡ﾟ`를 섞는다. Galmuri11 지원 여부를 확인함
   (지원: ˚ ° · * ｡ ･ ﾟ ♡ ♥ ★ ☆ ♬ ♪ … ㆀ ⊙ ▶ 『 』 ─ ※ / 미지원: ✽ ❀ ✿ ∘ ✦ ✧ ⁺ ₊ ⋆).
   미지원 기호는 특수문자 버튼에 넣지 않는다.
@@ -310,10 +311,10 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 - 문구 예시 톤: "...", "ㄷㅏ" 자모 분리, "^^", "~♡", "★닉네임★"
 
 **확정된 추가 기능 (사용자 승인, 2026-09-26)**
-- 사진 효과: 원본 / 뽀샤시 / 빛바램 / 흑백 → `photo.effect` (기본값 `soft`) — 상태·검증 완료, 렌더링 미구현
-- 디카 날짜 스탬프 on/off → `photo.showDateStamp` (날짜는 `text.date` 사용) — 상태·검증 완료, 렌더링 미구현
-- 특수문자 넣기 버튼 → `SPECIAL_CHARACTERS`, `insertText()` — 헬퍼 완료, UI 미구현
-- 댓글 줄: **편집 가능** → `comments[]` (최대 5개, 닉네임 20자, 내용 60자) — 상태·검증 완료, UI·렌더링 미구현
+- 사진 효과: 원본 / 뽀샤시 / 빛바램 / 흑백 → `photo.effect` (기본값 `soft`) — 완료
+- 디카 날짜 스탬프 on/off → `photo.showDateStamp` (날짜는 `text.date` 사용) — 완료
+- 특수문자 넣기 버튼 → `SPECIAL_CHARACTERS`, `insertText()` — 완료
+- 댓글 줄: **편집 가능** → `comments[]` (최대 5개, 닉네임 20자, 내용 60자) — 완료
 
 
 ## Known Issues
@@ -323,9 +324,6 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 - 스티커 끌기 E2E의 모바일 터치 부분은 Chromium CDP 전용이라 WebKit에서는 SKIP 된다 → 실제 iPhone에서 손으로 확인 필요
 - 기기가 웹폰트까지 강제로 바꾸는 경우(일부 제조사 WebView 설정)는 FontFace 로드 자체가 무력화될 수 있어 막을 수 없다.
   그 경우에도 줄바꿈은 실제 측정값으로 계산되므로 글자가 칸 밖으로 넘치지는 않는다
-- 업로드 이미지를 data URL로 저장하므로 localStorage 용량(약 5MB)을 넘을 수 있다.
-  업로드 단계에서 최대 변 길이로 축소·재인코딩하고, 템플릿 저장은 IndexedDB 사용을 검토한다.
-- Galmuri 웹폰트를 Canvas export에 쓰려면 `document.fonts.load` 완료 후 렌더링해야 한다. 픽셀 폰트는 export 배율(프리뷰 540 → 1080)에서 정수배 크기를 유지해야 선명하다.
 
 
 ## Test Status
@@ -355,34 +353,33 @@ browser upload flow: PASS (headless Chromium, production build, 13 시나리오)
   TC-01 PNG, TC-02 JPEG(2048 축소), TC-03 PDF(기존 사진 유지), TC-04 GIF, SVG, TC-05 가짜 확장자,
   TC-06 초대형 해상도(디코딩 전 거부), 깨진 PNG, TC-07 1x1, TC-08 초가로형, TC-09 초세로형,
   TC-10 투명 PNG(PNG 유지), 콘솔 에러 없음
-manual core flow: 미리보기·다운로드 미구현으로 NOT RUN
+manual core flow: 업로드→편집→다운로드→템플릿→JSON 흐름을 E2E로 확인. 실제 기기 수동 확인은 남음
 ```
 
-브라우저 테스트는 저장소 밖 임시 스크립트(playwright-core + 캐시된 chromium-headless-shell)로 실행했다.
-dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E를 저장소에 둘지는 renderer 이후 결정한다.
+브라우저 테스트는 저장소의 `e2e/`(playwright-core + chromium-headless-shell)로 실행한다. `### 19` 참고.
 
 
-## Last Session Summary (2026-09-26)
+## Last Session Summary (2026-09-27)
 
 ### Completed this session
 
-- 프로젝트 초기화, 앱 레이아웃 뼈대
-- EditorState 모델 / 검증 / reducer + 단위 테스트
-- 디자인 시안 canvas 작성
+- 보안 점검 후 커밋 기록 정리 (비공개 링크·참고 이미지 서술 제거), README 작성
+- private 저장소(`kwontory/dear-2004`)에 push, `main`이 `origin/main` 추적
+- PROGRESS.md 중 실제와 맞지 않던 항목 정리 (완료된 기능의 "미구현" 표기, 해결된 Known Issues, 옛 세션 요약)
 
 ### Next action
 
 - 실제 기기 확인 (사용자): iOS Safari·Samsung Internet·Android Chrome 확인
   - 확인 포인트: 입력칸 포커스 시 화면 확대 없음, 스티커 끌기 중 스크롤 없음, PNG/JPEG 저장, 템플릿 새로고침 유지, 사용자 글꼴 설정
-- WebKit E2E: 시스템 라이브러리 설치 완료(2026-09-26, 공식 Ubuntu 저장소·GPG 서명 확인). `E2E_BROWSER=webkit npm run test:e2e`
-- 공개 배포: 보류 (사용자가 원할 때 진행)
+- WebKit E2E: `E2E_BROWSER=webkit npm run test:e2e`
+- 공개 배포: 보류 (사용자가 원할 때 진행, CSP 헤더 포함)
 
 ### Verification
 
 ```text
 build: PASS
-tests: PASS (55)
-manual: 빌드 결과 서빙 확인 (title 렌더)
+tests: PASS (177)
+browser E2E: PASS (Chromium 134 / WebKit 129 + 1 skip)
 ```
 
 
