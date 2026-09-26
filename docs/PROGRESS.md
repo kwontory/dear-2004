@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (화면비·사진 조절 UI 완료 → 문구 렌더링부터)
+Core editor 구현 (문구 입력·렌더링 완료 → PNG/JPEG 다운로드부터)
 
 
 ## Completed
@@ -28,6 +28,8 @@ Core editor 구현 (화면비·사진 조절 UI 완료 → 문구 렌더링부�
 - [x] Canvas renderer 1차 (`src/render/`): 배경, 사진 cover 배치 + offset/scale/rotation, 사진 효과 4종, 날짜 스탬프
 - [x] CardPreview: export와 같은 픽셀 크기로 그리고 CSS로만 축소 (preview == export 픽셀 동일 확인)
 - [x] 화면비 선택 UI, 사진 조절(확대·좌우·위아래·회전·초기화), 사진 효과 선택, 날짜 스탬프 켜기 + 날짜 입력
+- [x] 문구 입력 UI (제목, TODAY is.., 감성 문구, BGM, 서명, 특수문자 넣기, 방문자 수, 댓글) + 카드 본문·서명 렌더링
+- [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
 
@@ -48,7 +50,7 @@ Core editor 구현 (화면비·사진 조절 UI 완료 → 문구 렌더링부�
 6. ~~Canvas renderer 구현~~ (1차 완료: 사진·효과·스탬프. 글자·틀별 레이아웃은 9·10단계에서 추가)
 7. ~~1:1 / 4:5 / 9:16 화면비 구현~~ (완료)
 8. ~~이미지 위치/크기 조절 구현~~ (완료, 슬라이더. 미리보기 드래그는 미구현)
-9. 텍스트 입력 구현
+9. ~~텍스트 입력 구현~~ (완료. 카드에는 memo 틀 기준 본문·서명만 그림. 제목·BGM·댓글 등은 틀별 레이아웃에서)
 10. 레트로 미니홈피 테마 구현
 11. 스티커 구현 — 원본 에셋·렌더러 완료, 추가/선택/드래그 UI 남음
 12. PNG/JPEG 다운로드 구현
@@ -137,6 +139,20 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 알 수 없는 추가 필드 → 제거
 
 
+### 14. 폰트와 모바일 글꼴 대응
+
+- 폰트: Galmuri11 / Galmuri11 Bold / Galmuri9 (v2.40.3, SIL OFL 1.1) → `public/fonts/`, 라이선스 `Galmuri-OFL.md`
+- 앱 전용 family 이름 `dear2004-galmuri11`, `dear2004-galmuri9`로 등록 (기기 폰트와 이름 충돌 방지)
+- 카드(캔버스): FontFace API로 로드 완료 후에만 글자를 그림 (`FontStatus` loading → 글자 생략, failed → 대체 글꼴 + UI 안내)
+- 줄바꿈은 항상 실제 폰트의 `measureText`로 계산 (`src/render/textLayout.ts`)
+- **Preview는 분리된(off-DOM) 캔버스에 그린 뒤 화면 캔버스로 복사**: Chrome은 화면 캔버스 요소의 CSS
+  letter-spacing을 캔버스 글자에 적용한다. 사용자 스타일·강제 글꼴이 카드 이미지에 섞이지 않게 한다
+- UI: 고정 px 폭 대신 `max-content`/`em` 칸, `flex-wrap`, `word-break: keep-all` + `overflow-wrap: anywhere`
+- `text-size-adjust: 100%` (자동 글자 확대 방지, 접근성 글자 크기 설정은 존중)
+- 터치 기기(`pointer: coarse`) 입력칸 16px 이상 → iOS Safari 포커스 확대 방지
+- 검증: 360px 모바일에서 모든 요소 serif 강제 + 글자 20px 강제 시 가로 스크롤·화면 밖 요소 0, 카드 픽셀 동일
+
+
 ### 13. Renderer 구조
 
 ```text
@@ -214,6 +230,9 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ## Known Issues
 
+- 폰트 3종 합계 약 1.1MB. 모바일 첫 로딩이 느릴 수 있다 → 배포 전 한글 서브셋 또는 지연 로딩 검토
+- 기기가 웹폰트까지 강제로 바꾸는 경우(일부 제조사 WebView 설정)는 FontFace 로드 자체가 무력화될 수 있어 막을 수 없다.
+  그 경우에도 줄바꿈은 실제 측정값으로 계산되므로 글자가 칸 밖으로 넘치지는 않는다
 - **스티커 이미지 출처·라이선스 확인 필요**: `public/stickers/`는 사용자가 제공한 참고 이미지에서 잘라낸 것이다.
   공개 배포 전에 원 저작자·이용 조건을 확인해야 한다.
 - 업로드 이미지를 data URL로 저장하므로 localStorage 용량(약 5MB)을 넘을 수 있다.
@@ -225,7 +244,10 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (107 tests — EditorState / reducer / text / upload / render / slider 변환)
+automated tests: PASS (121 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+browser text flow: PASS (21 시나리오) — TC-11~16 (빈 문구, 1000자 제한 + … 처리, 줄바꿈 400개, 이모지,
+  `<script>`·onerror 미실행, 혼합 문자열), 커서 위치 특수문자 삽입, 댓글 5개 제한·삭제, 방문자 수 음수 보정,
+  모바일 360px 가로 넘침 없음, 입력칸 16px, 사용자 글꼴·큰 글자 강제 시에도 레이아웃 유지·카드 픽셀 동일
 browser controls flow: PASS (18 시나리오) — 사진 전 비활성, 화면비 3종 캔버스 크기, TC-18 15회 반복 후 동일,
   키보드 슬라이더, 초기화 복원, 효과 4종 서로 다름, 스탬프 켜기/끄기, 이상한 날짜 안내, 콘솔 에러 없음
 browser render check: PASS — preview 캔버스와 별도 export 캔버스 픽셀 diff 0,
@@ -251,8 +273,8 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- 문구 입력 UI + 렌더링: Galmuri 폰트 self-host(`galmuri` npm, OFL), 줄바꿈·overflow 정책(TC-11~16)
-- 그다음: PNG/JPEG 다운로드 (같은 renderCard 사용)
+- PNG/JPEG 다운로드: 같은 renderCard를 분리 캔버스에 그리고 `document.fonts`·사진·스티커 로드를 기다린 뒤 toBlob
+- 그다음: 스티커 추가·선택·드래그 UI, 사용자 템플릿 CRUD
 
 ### Verification
 
