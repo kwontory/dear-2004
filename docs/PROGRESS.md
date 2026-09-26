@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (스티커 UI·템플릿 CRUD 완료 → JSON export/import UI부터)
+핵심 기능·디자인 적용 완료 → 배포 준비 (폰트 용량, 스티커 라이선스 확인, 공개 배포)
 
 
 ## Completed
@@ -32,6 +32,9 @@ Core editor 구현 (스티커 UI·템플릿 CRUD 완료 → JSON export/import U
 - [x] PNG/JPEG 다운로드 (`src/export/exportCard.ts`, `ExportButtons`) — 미리보기와 같은 renderCard, PNG 픽셀 완전 일치
 - [x] 스티커 UI: 목록에서 붙이기, 미리보기에서 끌기(마우스·터치), 선택 패널(크기·회전·좌우·위아래·맨 앞으로·떼어내기)
 - [x] 사용자 템플릿 CRUD (IndexedDB, 새로고침 후 유지, 손상 기록 건너뜀)
+- [x] JSON 내보내기/불러오기 UI (TC-23~27)
+- [x] 카드 틀 4종(감성 사진·미니홈피·사진첩·다이어리) + 스킨 4종 renderer
+- [x] 편집기 바인더 디자인 + 인덱스 탭(사진/문구/꾸미기/템플릿) + 모바일 배치
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
@@ -54,16 +57,16 @@ Core editor 구현 (스티커 UI·템플릿 CRUD 완료 → JSON export/import U
 7. ~~1:1 / 4:5 / 9:16 화면비 구현~~ (완료)
 8. ~~이미지 위치/크기 조절 구현~~ (완료, 슬라이더. 미리보기 드래그는 미구현)
 9. ~~텍스트 입력 구현~~ (완료. 카드에는 memo 틀 기준 본문·서명만 그림. 제목·BGM·댓글 등은 틀별 레이아웃에서)
-10. 레트로 미니홈피 테마 구현
+10. ~~레트로 미니홈피 테마 구현~~ (완료: 편집기 바인더 + 카드 틀 4종 + 스킨 4종)
 11. ~~스티커 구현~~ (완료)
 12. ~~PNG/JPEG 다운로드 구현~~ (완료)
 13. ~~사용자 템플릿 CRUD 구현~~ (완료)
 14. ~~browser persistence 구현~~ (완료, IndexedDB)
-15. JSON export/import 구현
-16. TEST_CASES 실행
-17. 반응형 및 접근성 정리
-18. production build
-19. 공개 배포
+15. ~~JSON export/import 구현~~ (완료)
+16. ~~TEST_CASES 실행~~ (TC-01~30 자동 브라우저 테스트로 확인, 아래 Test Status)
+17. 반응형 및 접근성 정리 — 320/375/768/1024px 가로 넘침 없음, 탭 키보드 조작, 사용자 글꼴 강제 확인. 실제 기기(iOS Safari, Samsung Internet) 확인 남음
+18. ~~production build~~ (PASS)
+19. 공개 배포 — 남음 (배포 전: 스티커 라이선스 확인, 폰트 용량 검토)
 
 
 ## Important Technical Decisions
@@ -140,6 +143,21 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 문자열·배열이 상한 초과 → 거부
 - 유한 숫자의 범위 초과 → reducer와 같은 clamp 함수로 보정
 - 알 수 없는 추가 필드 → 제거
+
+
+### 18. 카드 틀과 스킨
+
+`src/render/layout.ts`(틀별 영역), `src/render/frames.ts`(틀 장식·글자), `src/render/skins.ts`(배경).
+
+- 그리는 순서: 스킨 → 틀 장식 → 사진·날짜 스탬프 → 틀 위 장식(다이어리 테이프) → 글자 → 스티커
+- memo(감성 사진): 흰 바탕(스킨 안 보임), 본문 회색, `by. 서명`
+- minihome(미니홈피): 바인더(점 무늬) + 왼쪽 프로필(카운터, 프로필 사진, TODAY is.., 소개글=본문, 닉네임, 날짜)
+  + 오른쪽(제목, BGM 박스, 사진, 댓글 최대 3줄, `댓글(n) | 스크랩 | 퍼가기`) + 인덱스 탭 그림
+- album(사진첩): 윗줄(카운터·BGM), `[사진첩] 제목` + 날짜, 사진, 본문 3줄, `스크랩 0 | 퍼가기 | 댓글 n` + 댓글 최대 5줄, 서명 알약
+- diary(다이어리): 줄 노트(44px) + 여백선, 날짜·기분, 제목, 기울인 사진 + 테이프, 줄 위 본문, `from. 서명`
+- 스킨: sky-dots / pink-check / cream-diary / pastel-gradient(160deg, 4:5 시안 요청). 패널 테두리 색은 스킨별 accent
+- 기본값: 감성 사진 틀 + 파스텔 스킨
+- 편집기: 잿빛 하늘 배경(#c3ced6) + 바인더, 인덱스 탭은 WAI-ARIA tablist(화살표·Home·End), 비활성 탭은 hidden으로 유지
 
 
 ### 16. 스티커 편집
@@ -275,7 +293,10 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (140 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+automated tests: PASS (167 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+browser JSON flow: PASS (9 시나리오) — TC-23 내보내기, TC-24 왕복 후 같은 카드, TC-25 문법 오류, TC-26 다른 형식,
+  TC-27 미지원 버전, 잘못된 화면비·Infinity·SVG 데이터 거부 + 모두 기존 상태 유지
+browser tabs/responsive: PASS (7 시나리오) — 탭 키보드 조작, 320/768/1024px 모든 탭 가로 넘침 없음
 browser template flow: PASS (11 시나리오) — TC-19 생성, TC-20 새로고침 후 유지·불러오면 저장 당시와 같은 카드,
   TC-21 덮어쓰기·이름 바꾸기 새로고침 후 유지, TC-22 삭제 후 새로고침해도 없음, 손상 기록 건너뜀, 빈 이름 안내
 browser sticker flow: PASS (15 시나리오) — 붙이기·마우스 끌기·선택/해제·키보드 크기·떼어내기, 스티커 포함 PNG == 미리보기,
@@ -310,8 +331,10 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- JSON export/import UI (검증 로직은 완료): 파일로 내보내기 / 불러오기, 잘못된 JSON 안내 (TC-23~27)
-- 그다음: 디자인 시안 테마(바인더 편집기, 틀별 카드 레이아웃) 적용, 반응형·접근성 정리, 배포
+- 배포 전 확인: 스티커 이미지 출처·라이선스(사용자 확인 필요), 폰트 용량(약 1.1MB) 줄이기 검토
+- 실제 기기 확인: iOS Safari(입력칸 확대, 다운로드), Samsung Internet(사용자 글꼴), Android Chrome
+- 공개 배포 (정적 호스팅: Vercel / Netlify / GitHub Pages 중 선택)
+- 브라우저 E2E 스크립트를 저장소에 둘지 결정 (playwright-core devDependency 필요)
 
 ### Verification
 
