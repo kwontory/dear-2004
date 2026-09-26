@@ -35,3 +35,6 @@ e2e/.output
 .npmrc
 .claude/
 .mcp.json
+
+# Vercel CLI 프로젝트 연결 정보
+.vercel
