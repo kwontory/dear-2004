@@ -3,6 +3,7 @@ import { drawDateStamp, formatStampText } from './dateStamp'
 import { computeLayout, type Rect } from './layout'
 import { applyColorEffect, EFFECT_PARAMS } from './photoEffects'
 import { computePhotoPlacement } from './photoPlacement'
+import { buildStickerPixels, paintStickerArt } from './pixelStickers'
 
 /** 디코딩이 끝난 사진. HTMLImageElement나 ImageBitmap 모두 가능 */
 export interface LoadedPhoto {
@@ -97,6 +98,34 @@ function renderPhotoLayer(
 }
 
 /**
+ * 스티커: 1칸=1px로 그린 뒤 smoothing 없이 확대해 도트 경계를 선명하게 유지한다.
+ * size = 카드 너비 대비 스티커 너비, (x, y) = 카드 대비 중심 좌표
+ */
+function drawStickers(
+  ctx: CanvasRenderingContext2D,
+  state: EditorState,
+  layout: { width: number; height: number },
+  createCanvas: CanvasFactory,
+): void {
+  for (const sticker of state.stickers) {
+    const art = buildStickerPixels(sticker.kind, sticker.tint)
+    const sprite = createCanvas(art.width, art.height)
+    const spriteCtx = sprite.getContext('2d')
+    if (!spriteCtx) continue
+    paintStickerArt(spriteCtx, art)
+
+    const drawWidth = sticker.size * layout.width
+    const drawHeight = (drawWidth * art.height) / art.width
+    ctx.save()
+    ctx.translate(sticker.x * layout.width, sticker.y * layout.height)
+    ctx.rotate((sticker.rotation * Math.PI) / 180)
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(sprite, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight)
+    ctx.restore()
+  }
+}
+
+/**
  * 카드 한 장을 그린다. Preview와 Export가 모두 이 함수를 쓴다.
  * ctx의 캔버스는 computeLayout()이 돌려주는 export 크기와 같아야 한다.
  */
@@ -133,5 +162,7 @@ export function renderCard(
       layout.width * STAMP_DIGIT_HEIGHT_RATIO,
     )
   }
+
+  drawStickers(ctx, state, layout, createCanvas)
   ctx.restore()
 }

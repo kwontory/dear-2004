@@ -5,6 +5,7 @@ import type {
   PHOTO_EFFECTS,
   SCHEMA_VERSION,
   STICKER_KINDS,
+  STICKER_TINTS,
   TEXT_MAX_LENGTHS,
 } from './constants'
 
@@ -12,6 +13,7 @@ export type AspectRatio = (typeof ASPECT_RATIOS)[number]
 export type BackgroundId = (typeof BACKGROUND_IDS)[number]
 export type FrameId = (typeof FRAME_IDS)[number]
 export type StickerKind = (typeof STICKER_KINDS)[number]
+export type StickerTint = (typeof STICKER_TINTS)[number]
 export type PhotoEffect = (typeof PHOTO_EFFECTS)[number]
 
 /** 디코드가 끝난 업로드 이미지. dataUrl은 PNG/JPEG data URL만 허용한다. */
@@ -61,6 +63,7 @@ export interface CardTheme {
 export interface Sticker {
   id: string
   kind: StickerKind
+  tint: StickerTint
   x: number
   y: number
   size: number

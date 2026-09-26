@@ -18,10 +18,13 @@ export const BACKGROUND_IDS = ['sky-dots', 'pink-check', 'cream-diary', 'pastel-
 
 export const FRAME_IDS = ['minihome', 'diary', 'album', 'memo'] as const
 
-/** sprinkle = 특수문자 뿌리기 (✽ ˚ ∘ · ✿ 무리). Galmuri에 없는 기호라 그림으로 그린다. */
+/** 도트 스티커 모양. 격자는 src/render/pixelStickers.ts */
 export const STICKER_KINDS = [
-  'sparkle', 'twinkle', 'tulip', 'rose', 'sunflower', 'blossom', 'leaf', 'halo', 'sprinkle',
+  'heart', 'star', 'sparkle', 'bow', 'flower', 'moon', 'cherry', 'wingheart',
 ] as const
+
+/** 스티커 색: 연핑크 / 연하늘 / 연보라 / 은색 */
+export const STICKER_TINTS = ['pink', 'blue', 'lavender', 'silver'] as const
 
 /** original=원본, soft=뽀샤시, faded=빛바램, mono=흑백 */
 export const PHOTO_EFFECTS = ['original', 'soft', 'faded', 'mono'] as const

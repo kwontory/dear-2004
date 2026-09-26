@@ -18,6 +18,7 @@ import type {
   PhotoTransform,
   Sticker,
   StickerKind,
+  StickerTint,
   TextFieldKey,
   VisitCounter,
 } from './types'
@@ -33,7 +34,7 @@ export type EditorAction =
   | { type: 'setText'; field: TextFieldKey; value: string }
   | { type: 'updateCounter'; patch: Partial<VisitCounter> }
   | { type: 'updateTheme'; patch: Partial<CardTheme> }
-  | { type: 'addSticker'; id: string; kind: StickerKind }
+  | { type: 'addSticker'; id: string; kind: StickerKind; tint: StickerTint }
   | { type: 'updateSticker'; id: string; patch: Partial<Omit<Sticker, 'id'>> }
   | { type: 'removeSticker'; id: string }
   | { type: 'addComment'; id: string }
@@ -116,7 +117,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (state.stickers.some((s) => s.id === action.id)) return state
       return {
         ...state,
-        stickers: [...state.stickers, { id: action.id, kind: action.kind, ...NEW_STICKER_DEFAULTS }],
+        stickers: [
+          ...state.stickers,
+          { id: action.id, kind: action.kind, tint: action.tint, ...NEW_STICKER_DEFAULTS },
+        ],
       }
 
     case 'updateSticker':

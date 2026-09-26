@@ -27,8 +27,8 @@ function fullState(): EditorState {
   state.text.body = '방학 첫날.\n떡볶이 😀✨'
   state.theme = { background: 'pink-check', frame: 'diary' }
   state.stickers = [
-    { id: 's1', kind: 'sparkle', x: 0.1, y: 0.9, size: 0.12, rotation: -20 },
-    { id: 's2', kind: 'tulip', x: 0.5, y: 0.5, size: 0.2, rotation: 0 },
+    { id: 's1', kind: 'sparkle', tint: 'pink', x: 0.1, y: 0.9, size: 0.12, rotation: -20 },
+    { id: 's2', kind: 'heart', tint: 'blue', x: 0.5, y: 0.5, size: 0.2, rotation: 0 },
   ]
   state.comments = [
     { id: 'c1', author: '단짝♡', text: '헐 우리 사진이ㄷㅏ ㅋㅋㅋ' },
@@ -58,7 +58,7 @@ describe('createDefaultEditorState', () => {
 
   it('호출마다 독립된 객체를 반환한다', () => {
     const a = createDefaultEditorState()
-    a.stickers.push({ id: 'x', kind: 'sparkle', x: 0, y: 0, size: 0.1, rotation: 0 })
+    a.stickers.push({ id: 'x', kind: 'sparkle', tint: 'pink', x: 0, y: 0, size: 0.1, rotation: 0 })
     a.text.title = 'changed'
     const b = createDefaultEditorState()
     expect(b.stickers).toEqual([])
@@ -145,8 +145,10 @@ describe('잘못된 JSON 거부 (TC-25 ~ TC-27)', () => {
 
   it('스티커 kind / id 오류', () => {
     expectRejected(mutated((raw) => { raw.stickers[0].kind = 'skull' }), 'stickers[0].kind')
-    // 이전 시안의 스티커 종류는 더 이상 허용하지 않는다
-    expectRejected(mutated((raw) => { raw.stickers[0].kind = 'heart' }), 'stickers[0].kind')
+    // 이전 시안의 스티커 종류 / 없는 색은 허용하지 않는다
+    expectRejected(mutated((raw) => { raw.stickers[0].kind = 'tulip' }), 'stickers[0].kind')
+    expectRejected(mutated((raw) => { raw.stickers[0].tint = 'gold' }), 'stickers[0].tint')
+    expectRejected(mutated((raw) => { delete raw.stickers[0].tint }), 'stickers[0].tint')
     expectRejected(mutated((raw) => { raw.stickers[1].id = 's1' }), '중복')
     expectRejected(mutated((raw) => { raw.stickers[0].id = '' }), 'stickers[0].id')
   })

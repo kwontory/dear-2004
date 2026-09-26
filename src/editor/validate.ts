@@ -8,6 +8,7 @@ import {
   SCHEMA_VERSION,
   STICKER_KINDS,
   STICKER_LIMITS,
+  STICKER_TINTS,
   TEXT_MAX_LENGTHS,
 } from './constants'
 import { clampCounterValue, clampPhotoTransform, clampSticker } from './math'
@@ -160,6 +161,7 @@ function readStickers(value: unknown, path: string): Sticker[] {
     return clampSticker({
       id: readUniqueId(obj.id, `${p}.id`, STICKER_LIMITS.maxIdLength, seenIds),
       kind: readEnum(obj.kind, `${p}.kind`, STICKER_KINDS),
+      tint: readEnum(obj.tint, `${p}.tint`, STICKER_TINTS),
       x: readNumber(obj.x, `${p}.x`),
       y: readNumber(obj.y, `${p}.y`),
       size: readNumber(obj.size, `${p}.size`),
