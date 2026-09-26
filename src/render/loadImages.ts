@@ -1,6 +1,6 @@
 import { stickerAssetUrl } from '../editor/stickerAssets'
 import type { EditorState, StickerKind } from '../editor/types'
-import { loadCardFonts } from './fonts'
+import { cardText, loadCardFonts } from './fonts'
 import type { CardAssets, LoadedImage } from './renderCard'
 
 /** 이미지 하나를 디코딩까지 끝낸다. 실패하면 null */
@@ -34,7 +34,7 @@ export function loadSticker(kind: StickerKind): Promise<LoadedImage | null> {
 export async function loadCardAssets(state: EditorState): Promise<CardAssets> {
   const kinds = [...new Set(state.stickers.map((s) => s.kind))]
   const [fontsOk, photo, stickers] = await Promise.all([
-    loadCardFonts(),
+    loadCardFonts(cardText(state)),
     state.photo.source ? loadImage(state.photo.source.dataUrl) : Promise.resolve(null),
     Promise.all(kinds.map(async (kind) => [kind, await loadSticker(kind)] as const)),
   ])

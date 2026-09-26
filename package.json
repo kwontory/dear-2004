@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "fonts:subset": "node scripts/subset-fonts.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
@@ -20,7 +21,9 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "fontkit": "^2.0.4",
     "oxlint": "^1.81.0",
+    "subset-font": "^2.9.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.2"

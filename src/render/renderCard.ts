@@ -27,6 +27,8 @@ export interface CardAssets {
   photo: LoadedPhoto | null
   stickers: ReadonlyMap<StickerKind, LoadedImage>
   fonts: FontStatus
+  /** 폰트 조각을 새로 받을 때마다 바뀌는 값 (그리기 결과에는 쓰지 않고, 다시 그리게 하는 신호) */
+  fontsVersion?: number
 }
 
 export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement

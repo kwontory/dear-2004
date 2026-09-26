@@ -1,20 +1,4 @@
-/*
- * 픽셀 폰트 Galmuri (SIL OFL 1.1, public/fonts/Galmuri-OFL.md).
- * 앱 전용 family 이름을 써서 기기의 같은 이름 폰트·사용자 지정 글꼴과 섞이지 않게 한다.
- */
-@font-face {
-  font-family: 'dear2004-galmuri11';
-  src: url('/fonts/Galmuri11.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'dear2004-galmuri11';
-  src: url('/fonts/Galmuri11-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-display: swap;
-}
+/* 픽셀 폰트 Galmuri는 src/render/fonts.ts에서 FontFace로 등록한다 (조각별 unicode-range) */
 
 :root {
   /* 시안 색 (잿빛 하늘 배경 + 바인더) */

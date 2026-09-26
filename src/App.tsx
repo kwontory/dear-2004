@@ -68,8 +68,12 @@ function App() {
   const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
   const photo = useLoadedPhoto(state.photo.source)
   const stickerImages = useStickerImages(state.stickers)
-  const fonts = useCardFonts()
-  const assets = useMemo(() => ({ photo, stickers: stickerImages, fonts }), [photo, stickerImages, fonts])
+  const { status: fonts, version: fontsVersion } = useCardFonts(state)
+  // fontsVersion이 바뀌면(새 글자 조각 도착) 미리보기를 다시 그린다
+  const assets = useMemo(
+    () => ({ photo, stickers: stickerImages, fonts, fontsVersion }),
+    [photo, stickerImages, fonts, fontsVersion],
+  )
   const [tab, setTab] = useState<TabId>('photo')
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null)
   const selectedSticker = state.stickers.find((s) => s.id === selectedStickerId) ?? null
