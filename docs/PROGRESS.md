@@ -23,6 +23,7 @@ Core editor 구현 (EditorState 완료 → 이미지 업로드부터)
 - [x] EditorState 타입·기본값·상수 정의 (`src/editor/`)
 - [x] EditorState 검증 (`validateEditorState`, `parseEditorStateJson`) — JSON import / 템플릿 로드에서 재사용
 - [x] `editorReducer` — 모든 상태 변경 경로, clamp 로직 공유
+- [x] EditorState 확장: 사진 효과, 날짜 스탬프, 편집 가능한 댓글, 특수문자 삽입 헬퍼
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
 
@@ -141,7 +142,8 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 - 폰트: **Galmuri** (픽셀 한글, OFL-1.1, npm `galmuri`) — 굴림 12px 비트맵 느낌.
   Galmuri11은 12px 배수, Galmuri9은 10px 배수에서 선명하다. self-host 가능 → Canvas export에도 사용.
-- 편집기: 구름 하늘 스킨 위의 **바인더 노트** (회색-파랑 도트 테두리, 스프링 고리, 흰 좌/우 페이지),
+- 편집기 화면 제목 표기: **그땐 그랬지,,** (사용자가 시안에서 직접 수정. 상단 부제 문구는 삭제)
+- 편집기: **잿빛 하늘색(#c3ced6) 단색 배경** 위의 **바인더 노트** (회색-파랑 도트 테두리, 스프링 고리, 흰 좌/우 페이지),
   오른쪽 **인덱스 탭**(사진 / 문구 / 꾸미기 / 템플릿)으로 왼쪽 페이지 내용 전환, 오른쪽 페이지는 미리보기+저장.
 - 옛날 웹 컨트롤: 회색 입체 버튼, 1px 입력칸, 점선 구분선, "■ 제목" 섹션 헤더, 밑줄 텍스트 링크.
 - 색: 제목 파랑 #2a6db0, 탭 #2f7fa8, 카운터 주황 #c75000, 하트 핑크 #d43a70, 본문 #4a4a4a, 보조 #767676.
@@ -153,11 +155,11 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 - 스티커: 도트(픽셀) 아트 별·하트·구름·반짝이·리본·스마일
 - 문구 예시 톤: "...", "ㄷㅏ" 자모 분리, "^^", "~♡", "★닉네임★"
 
-**제안 (사용자 확인 전, 아직 요구사항 아님)**
-- 사진 효과: 원본 / 뽀샤시 / 빛바램 / 흑백 → EditorState에 `photo.effect` 추가 필요
-- 디카 날짜 스탬프 on/off → EditorState에 필드 추가 필요
-- 특수문자 넣기 버튼 (★☆♡♥♬♪…ㆀ『』※^^) → UI만, 상태 변경 없음
-- 사진첩 틀의 "댓글" 줄 문구를 고정 장식으로 둘지, 편집 가능하게 할지
+**확정된 추가 기능 (사용자 승인, 2026-09-26)**
+- 사진 효과: 원본 / 뽀샤시 / 빛바램 / 흑백 → `photo.effect` (기본값 `soft`) — 상태·검증 완료, 렌더링 미구현
+- 디카 날짜 스탬프 on/off → `photo.showDateStamp` (날짜는 `text.date` 사용) — 상태·검증 완료, 렌더링 미구현
+- 특수문자 넣기 버튼 → `SPECIAL_CHARACTERS`, `insertText()` — 헬퍼 완료, UI 미구현
+- 댓글 줄: **편집 가능** → `comments[]` (최대 5개, 닉네임 20자, 내용 60자) — 상태·검증 완료, UI·렌더링 미구현
 
 
 ## Known Issues
@@ -171,7 +173,7 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (45 tests — EditorState 검증 / reducer)
+automated tests: PASS (55 tests — EditorState 검증 / reducer / text)
 manual core flow: NOT RUN (UI 기능 미구현)
 edge cases: 모델 단위만 PASS (TC-12, 14~18, 24~27 해당 부분)
 ```
@@ -194,7 +196,7 @@ edge cases: 모델 단위만 PASS (TC-12, 14~18, 24~27 해당 부분)
 
 ```text
 build: PASS
-tests: PASS (45)
+tests: PASS (55)
 manual: 빌드 결과 서빙 확인 (title 렌더)
 ```
 
