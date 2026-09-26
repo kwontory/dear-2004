@@ -42,7 +42,8 @@ export type EditorAction =
   /** 템플릿 불러오기 / JSON import. 반드시 validateEditorState를 통과한 값을 넘긴다. */
   | { type: 'replaceState'; state: EditorState }
 
-const NEW_STICKER_DEFAULTS = { x: 0.5, y: 0.5, size: 0.15, rotation: 0 } as const
+/** 새 스티커: 카드 가운데, 카드 너비의 7.5% */
+const NEW_STICKER_DEFAULTS = { x: 0.5, y: 0.5, size: 0.075, rotation: 0 } as const
 
 /**
  * EditorState의 모든 변경은 이 reducer를 거친다.
