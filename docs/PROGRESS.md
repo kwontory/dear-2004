@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (이미지 업로드 완료 → Canvas renderer부터)
+Core editor 구현 (Canvas renderer 1차 완료 → 화면비 선택 / 사진 조절 UI부터)
 
 
 ## Completed
@@ -25,6 +25,8 @@ Core editor 구현 (이미지 업로드 완료 → Canvas renderer부터)
 - [x] `editorReducer` — 모든 상태 변경 경로, clamp 로직 공유
 - [x] EditorState 확장: 사진 효과, 날짜 스탬프, 편집 가능한 댓글, 특수문자 삽입 헬퍼
 - [x] 이미지 업로드 + 파일 검증 (`src/upload/`, `src/components/PhotoUpload.tsx`), App에 `useReducer(editorReducer)` 연결
+- [x] Canvas renderer 1차 (`src/render/`): 배경, 사진 cover 배치 + offset/scale/rotation, 사진 효과 4종, 날짜 스탬프
+- [x] CardPreview: export와 같은 픽셀 크기로 그리고 CSS로만 축소 (preview == export 픽셀 동일 확인)
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
 
@@ -42,7 +44,7 @@ Core editor 구현 (이미지 업로드 완료 → Canvas renderer부터)
 3. ~~EditorState 타입 정의~~ (완료, reducer·검증 포함)
 4. ~~이미지 업로드 구현~~ (완료)
 5. ~~PNG/JPEG 파일 검증 구현~~ (완료)
-6. Canvas renderer 구현
+6. ~~Canvas renderer 구현~~ (1차 완료: 사진·효과·스탬프. 글자·틀별 레이아웃은 9·10단계에서 추가)
 7. 1:1 / 4:5 / 9:16 화면비 구현
 8. 이미지 위치/크기 조절 구현
 9. 텍스트 입력 구현
@@ -134,6 +136,26 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 알 수 없는 추가 필드 → 제거
 
 
+### 13. Renderer 구조
+
+```text
+EditorState ─ computeLayout(ratio, frame) ─┐
+            └ useLoadedPhoto(source) ──────┴→ renderCard(ctx, state, photo) → Canvas
+                                                  ├ CardPreview (CSS 축소만)
+                                                  └ Export (다음 단계, 같은 함수)
+```
+
+- 모든 좌표는 export 픽셀 기준 (1080 × 1080/1350/1920). Preview 캔버스도 같은 크기
+- 사진: cover 맞춤 × `transform.scale`, 중심 = 영역 중심 + offset × 영역 절반 (`computePhotoPlacement`)
+- 효과: `ctx.filter` 미사용 (Safari 차이). 픽셀 직접 계산 + 1/8 축소-확대로 blur
+  - soft: 채도 0.92, ×0.88 +30, 흐린 사본 screen 0.45, 흰 안개 0.06
+  - faded: 채도 0.6, R×0.84+38 G×0.8+38 B×0.72+41
+  - mono: 회색조 ×0.9 +18
+- 날짜 스탬프: `text.date`를 `formatStampText`로 해석 ("2004.10.27", "2004-7-21", "2004년 10월 27일" 등).
+  해석 불가면 그리지 않는다. 숫자 높이 = 카드 너비 × 2.4%, 번짐은 shadowBlur 3겹
+- 틀별 레이아웃은 아직 없음: 모든 frame이 memo(감성 사진) 배치 — 사진 높이 비율 1:1 0.589 / 4:5 0.62 / 9:16 0.6
+
+
 ### 12. 업로드 정책
 
 `src/upload/` 참고. 순서: 신고된 MIME → 용량 → 매직 바이트 → 헤더 해상도 → 실제 디코드 → 축소·재인코딩.
@@ -197,7 +219,9 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (77 tests — EditorState 검증 / reducer / text / upload 검증)
+automated tests: PASS (103 tests — EditorState / reducer / text / upload / render)
+browser render check: PASS — preview 캔버스와 별도 export 캔버스 픽셀 diff 0,
+  효과 4종 / 스탬프 / 3 화면비 스크린샷 육안 확인, 낮은 화면·모바일에서 미리보기 비율 유지
 browser upload flow: PASS (headless Chromium, production build, 13 시나리오)
   TC-01 PNG, TC-02 JPEG(2048 축소), TC-03 PDF(기존 사진 유지), TC-04 GIF, SVG, TC-05 가짜 확장자,
   TC-06 초대형 해상도(디코딩 전 거부), 깨진 PNG, TC-07 1x1, TC-08 초가로형, TC-09 초세로형,
@@ -219,8 +243,9 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- Canvas renderer (`renderCard(ctx, state, size)`) — Preview와 Export가 같은 함수를 쓰게 한다
-- 먼저 사진 영역 cover 배치 + transform(offset/scale/rotation) + 사진 효과 + 날짜 스탬프부터
+- 화면비 선택 UI (1:1 / 4:5 / 9:16)
+- 사진 조절 UI (확대, 좌우, 위아래, 회전, 초기화) + 사진 효과 / 날짜 스탬프 켜기
+- 이후: 문구 렌더링(Galmuri 폰트 self-host, 줄바꿈·overflow 정책), PNG/JPEG 다운로드
 
 ### Verification
 
