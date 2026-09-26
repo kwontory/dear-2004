@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (PNG/JPEG 다운로드 완료 → 스티커 UI / 템플릿 CRUD부터)
+Core editor 구현 (스티커 UI·템플릿 CRUD 완료 → JSON export/import UI부터)
 
 
 ## Completed
@@ -30,6 +30,8 @@ Core editor 구현 (PNG/JPEG 다운로드 완료 → 스티커 UI / 템플릿 CR
 - [x] 화면비 선택 UI, 사진 조절(확대·좌우·위아래·회전·초기화), 사진 효과 선택, 날짜 스탬프 켜기 + 날짜 입력
 - [x] 문구 입력 UI (제목, TODAY is.., 감성 문구, BGM, 서명, 특수문자 넣기, 방문자 수, 댓글) + 카드 본문·서명 렌더링
 - [x] PNG/JPEG 다운로드 (`src/export/exportCard.ts`, `ExportButtons`) — 미리보기와 같은 renderCard, PNG 픽셀 완전 일치
+- [x] 스티커 UI: 목록에서 붙이기, 미리보기에서 끌기(마우스·터치), 선택 패널(크기·회전·좌우·위아래·맨 앞으로·떼어내기)
+- [x] 사용자 템플릿 CRUD (IndexedDB, 새로고침 후 유지, 손상 기록 건너뜀)
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
@@ -53,10 +55,10 @@ Core editor 구현 (PNG/JPEG 다운로드 완료 → 스티커 UI / 템플릿 CR
 8. ~~이미지 위치/크기 조절 구현~~ (완료, 슬라이더. 미리보기 드래그는 미구현)
 9. ~~텍스트 입력 구현~~ (완료. 카드에는 memo 틀 기준 본문·서명만 그림. 제목·BGM·댓글 등은 틀별 레이아웃에서)
 10. 레트로 미니홈피 테마 구현
-11. 스티커 구현 — 원본 에셋·렌더러 완료, 추가/선택/드래그 UI 남음
+11. ~~스티커 구현~~ (완료)
 12. ~~PNG/JPEG 다운로드 구현~~ (완료)
-13. 사용자 템플릿 CRUD 구현
-14. browser persistence 구현
+13. ~~사용자 템플릿 CRUD 구현~~ (완료)
+14. ~~browser persistence 구현~~ (완료, IndexedDB)
 15. JSON export/import 구현
 16. TEST_CASES 실행
 17. 반응형 및 접근성 정리
@@ -138,6 +140,25 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 문자열·배열이 상한 초과 → 거부
 - 유한 숫자의 범위 초과 → reducer와 같은 clamp 함수로 보정
 - 알 수 없는 추가 필드 → 제거
+
+
+### 16. 스티커 편집
+
+- 붙이기: 카드 가운데부터 5개 단위로 4%씩 비껴 놓고 바로 선택. 최대 50개
+- 끌기: pointer 이벤트 + pointer capture. 판정은 `hitTestStickers`(회전 반영, 위쪽 스티커 우선, 터치는 판정 영역 +2.5%)
+- 모바일: 스티커 위에서 시작한 터치만 `touchstart.preventDefault()`로 스크롤을 막는다
+- 선택 테두리는 캔버스 위 HTML 오버레이 → 저장 이미지에 안 들어감 (E2E: PNG == 미리보기, 테두리 색 픽셀 0)
+- 효과를 입힌 사진 레이어를 이미지·배치·효과·크기 키로 캐시 (끌 때 재계산 방지)
+- 데스크톱 미리보기 패널 sticky
+
+
+### 17. 템플릿 저장
+
+- IndexedDB `dear2004` / store `templates` (keyPath `id`). 기록 = `{ id, name(1~30자), createdAt, updatedAt, state: EditorState }`
+- 읽을 때마다 `parseTemplateRecord` → `validateEditorState`로 재검증, 손상 기록은 건너뛰고 개수 안내
+- IndexedDB를 못 열면 메모리 저장소 + "새로고침하면 사라져요" 안내
+- 불러오기·덮어쓰기·삭제 전 `confirm`. 저장 공간 초과(QuotaExceededError) 안내
+- `structuredClone`으로 저장·불러오기 시 상태를 복제 (이후 편집이 저장본을 바꾸지 않게)
 
 
 ### 15. Export
@@ -254,7 +275,11 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (124 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+automated tests: PASS (140 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+browser template flow: PASS (11 시나리오) — TC-19 생성, TC-20 새로고침 후 유지·불러오면 저장 당시와 같은 카드,
+  TC-21 덮어쓰기·이름 바꾸기 새로고침 후 유지, TC-22 삭제 후 새로고침해도 없음, 손상 기록 건너뜀, 빈 이름 안내
+browser sticker flow: PASS (15 시나리오) — 붙이기·마우스 끌기·선택/해제·키보드 크기·떼어내기, 스티커 포함 PNG == 미리보기,
+  모바일 터치 끌기 이동 + 끄는 동안 스크롤 없음 + 빈 곳은 스크롤, 모바일 가로 넘침 없음
 browser export flow: PASS (23 시나리오) — TC-28/29/30 세 화면비 PNG·JPEG 크기, PNG == 미리보기 픽셀 완전 일치,
   JPEG 평균 오차 < 2, TC-10 투명 PNG 사진 → JPEG 흰 바탕, 파일 이름 규칙, 콘솔 에러 없음
 browser text flow: PASS (21 시나리오) — TC-11~16 (빈 문구, 1000자 제한 + … 처리, 줄바꿈 400개, 이모지,
@@ -285,9 +310,8 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- 스티커 추가·선택·드래그 UI
-- 사용자 템플릿 CRUD + browser persistence (사진 data URL 용량 때문에 IndexedDB 우선 검토)
-- JSON export/import UI (검증 로직은 완료)
+- JSON export/import UI (검증 로직은 완료): 파일로 내보내기 / 불러오기, 잘못된 JSON 안내 (TC-23~27)
+- 그다음: 디자인 시안 테마(바인더 편집기, 틀별 카드 레이아웃) 적용, 반응형·접근성 정리, 배포
 
 ### Verification
 
