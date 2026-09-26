@@ -18,7 +18,10 @@ export const BACKGROUND_IDS = ['sky-dots', 'pink-check', 'cream-diary', 'pastel-
 
 export const FRAME_IDS = ['minihome', 'diary', 'album', 'memo'] as const
 
-export const STICKER_KINDS = ['star', 'heart', 'cloud', 'sparkle', 'ribbon', 'smile'] as const
+/** sprinkle = 특수문자 뿌리기 (✽ ˚ ∘ · ✿ 무리). Galmuri에 없는 기호라 그림으로 그린다. */
+export const STICKER_KINDS = [
+  'sparkle', 'twinkle', 'tulip', 'rose', 'sunflower', 'blossom', 'leaf', 'halo', 'sprinkle',
+] as const
 
 /** original=원본, soft=뽀샤시, faded=빛바램, mono=흑백 */
 export const PHOTO_EFFECTS = ['original', 'soft', 'faded', 'mono'] as const
@@ -67,7 +70,8 @@ export const COMMENT_LIMITS = {
   maxIdLength: 64,
 } as const
 
-/** 문구 입력칸 옆 "특수문자 넣기" 버튼 */
+/** 문구 입력칸 옆 "특수문자 넣기" 버튼. 모두 Galmuri 폰트가 지원하는 글자만 쓴다. */
 export const SPECIAL_CHARACTERS = [
-  '★', '☆', '♡', '♥', '♬', '♪', '…', '~', 'ㆀ', '⊙', '▶', '『', '』', '─', '※', '^^',
+  '˚', '｡', '･ﾟ', '°', '·', '*', '★', '☆', '♡', '♥', '♬', '♪',
+  '…', '~', 'ㆀ', '⊙', '▶', '『', '』', '─', '※', '^^', '*˚', '｡ﾟ',
 ] as const

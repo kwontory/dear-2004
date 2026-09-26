@@ -25,7 +25,7 @@ describe('editorReducer', () => {
     const start = run([
       { type: 'setPhoto', source: SOURCE },
       { type: 'updatePhotoTransform', patch: { offsetX: 0.3, scale: 2 } },
-      { type: 'addSticker', id: 'a', kind: 'star' },
+      { type: 'addSticker', id: 'a', kind: 'sparkle' },
     ])
     const cycle: EditorAction[] = ['4:5', '9:16', '1:1'].map((r) => ({
       type: 'setAspectRatio',
@@ -74,13 +74,13 @@ describe('editorReducer', () => {
 
   it('스티커 추가 / 수정 / 삭제', () => {
     let state = run([
-      { type: 'addSticker', id: 'a', kind: 'heart' },
-      { type: 'addSticker', id: 'a', kind: 'star' }, // 중복 id 무시
-      { type: 'addSticker', id: 'b', kind: 'cloud' },
+      { type: 'addSticker', id: 'a', kind: 'tulip' },
+      { type: 'addSticker', id: 'a', kind: 'sparkle' }, // 중복 id 무시
+      { type: 'addSticker', id: 'b', kind: 'sprinkle' },
       { type: 'updateSticker', id: 'a', patch: { x: 2, size: 0.3 } },
     ])
     expect(state.stickers.map((s) => s.id)).toEqual(['a', 'b'])
-    expect(state.stickers[0]).toMatchObject({ kind: 'heart', x: 1, size: 0.3 })
+    expect(state.stickers[0]).toMatchObject({ kind: 'tulip', x: 1, size: 0.3 })
     state = editorReducer(state, { type: 'removeSticker', id: 'a' })
     expect(state.stickers.map((s) => s.id)).toEqual(['b'])
     expectValid(state)
@@ -90,7 +90,7 @@ describe('editorReducer', () => {
     const actions: EditorAction[] = Array.from({ length: STICKER_LIMITS.maxCount + 5 }, (_, i) => ({
       type: 'addSticker',
       id: `s${i}`,
-      kind: 'star',
+      kind: 'sparkle',
     }))
     expect(run(actions).stickers).toHaveLength(STICKER_LIMITS.maxCount)
   })
@@ -135,7 +135,7 @@ describe('editorReducer', () => {
     const snapshot = structuredClone(state)
     run([
       { type: 'setText', field: 'title', value: 'x' },
-      { type: 'addSticker', id: 'a', kind: 'star' },
+      { type: 'addSticker', id: 'a', kind: 'sparkle' },
       { type: 'updateTheme', patch: { frame: 'memo' } },
     ], state)
     expect(state).toEqual(snapshot)
