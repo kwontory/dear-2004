@@ -2,6 +2,7 @@ import type {
   ASPECT_RATIOS,
   BACKGROUND_IDS,
   FRAME_IDS,
+  PHOTO_EFFECTS,
   SCHEMA_VERSION,
   STICKER_KINDS,
   TEXT_MAX_LENGTHS,
@@ -11,6 +12,7 @@ export type AspectRatio = (typeof ASPECT_RATIOS)[number]
 export type BackgroundId = (typeof BACKGROUND_IDS)[number]
 export type FrameId = (typeof FRAME_IDS)[number]
 export type StickerKind = (typeof STICKER_KINDS)[number]
+export type PhotoEffect = (typeof PHOTO_EFFECTS)[number]
 
 /** 디코드가 끝난 업로드 이미지. dataUrl은 PNG/JPEG data URL만 허용한다. */
 export interface PhotoSource {
@@ -35,6 +37,9 @@ export interface PhotoTransform {
 export interface PhotoLayer {
   source: PhotoSource | null
   transform: PhotoTransform
+  effect: PhotoEffect
+  /** 사진 모서리에 디카 날짜 스탬프('04 10 27)를 찍을지. 날짜는 text.date를 사용한다. */
+  showDateStamp: boolean
 }
 
 export type TextFieldKey = keyof typeof TEXT_MAX_LENGTHS
@@ -62,6 +67,13 @@ export interface Sticker {
   rotation: number
 }
 
+/** 카드에 "ㄴ author : text" 형태로 표시되는 댓글 */
+export interface CardComment {
+  id: string
+  author: string
+  text: string
+}
+
 /**
  * 편집 가능한 모든 상태의 단일 source of truth.
  * 템플릿 저장, JSON export/import, 렌더링이 모두 이 구조를 그대로 사용한다.
@@ -74,4 +86,5 @@ export interface EditorState {
   counter: VisitCounter
   theme: CardTheme
   stickers: Sticker[]
+  comments: CardComment[]
 }

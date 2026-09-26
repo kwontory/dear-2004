@@ -1,10 +1,19 @@
-import { ASPECT_RATIOS, STICKER_LIMITS, TEXT_MAX_LENGTHS } from './constants'
+import {
+  ASPECT_RATIOS,
+  COMMENT_LIMITS,
+  PHOTO_EFFECTS,
+  STICKER_LIMITS,
+  TEXT_MAX_LENGTHS,
+} from './constants'
 import { createDefaultPhotoTransform } from './defaults'
 import { clampCounterValue, clampPhotoTransform, clampSticker } from './math'
+import { truncateText } from './text'
 import type {
   AspectRatio,
+  CardComment,
   CardTheme,
   EditorState,
+  PhotoEffect,
   PhotoSource,
   PhotoTransform,
   Sticker,
@@ -19,25 +28,21 @@ export type EditorAction =
   | { type: 'clearPhoto' }
   | { type: 'updatePhotoTransform'; patch: Partial<PhotoTransform> }
   | { type: 'resetPhotoTransform' }
+  | { type: 'setPhotoEffect'; effect: PhotoEffect }
+  | { type: 'setDateStamp'; visible: boolean }
   | { type: 'setText'; field: TextFieldKey; value: string }
   | { type: 'updateCounter'; patch: Partial<VisitCounter> }
   | { type: 'updateTheme'; patch: Partial<CardTheme> }
   | { type: 'addSticker'; id: string; kind: StickerKind }
   | { type: 'updateSticker'; id: string; patch: Partial<Omit<Sticker, 'id'>> }
   | { type: 'removeSticker'; id: string }
+  | { type: 'addComment'; id: string }
+  | { type: 'updateComment'; id: string; patch: Partial<Omit<CardComment, 'id'>> }
+  | { type: 'removeComment'; id: string }
   /** 템플릿 불러오기 / JSON import. 반드시 validateEditorState를 통과한 값을 넘긴다. */
   | { type: 'replaceState'; state: EditorState }
 
 const NEW_STICKER_DEFAULTS = { x: 0.5, y: 0.5, size: 0.15, rotation: 0 } as const
-
-/** 최대 길이로 자르되 이모지 등 surrogate pair가 반으로 잘리지 않게 한다. */
-export function truncateText(value: string, maxLength: number): string {
-  if (value.length <= maxLength) return value
-  let cut = value.slice(0, maxLength)
-  const last = cut.charCodeAt(cut.length - 1)
-  if (last >= 0xd800 && last <= 0xdbff) cut = cut.slice(0, -1)
-  return cut
-}
 
 /**
  * EditorState의 모든 변경은 이 reducer를 거친다.
@@ -50,16 +55,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       // 좌표가 해상도 독립이므로 화면비만 바꾸면 된다
       return { ...state, aspectRatio: action.aspectRatio }
 
+    // 새 사진이면 위치·크기만 초기화하고 효과·날짜 스탬프 설정은 유지한다
     case 'setPhoto':
       return {
         ...state,
-        photo: { source: action.source, transform: createDefaultPhotoTransform() },
+        photo: { ...state.photo, source: action.source, transform: createDefaultPhotoTransform() },
       }
 
     case 'clearPhoto':
       return {
         ...state,
-        photo: { source: null, transform: createDefaultPhotoTransform() },
+        photo: { ...state.photo, source: null, transform: createDefaultPhotoTransform() },
       }
 
     case 'updatePhotoTransform':
@@ -73,6 +79,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'resetPhotoTransform':
       return { ...state, photo: { ...state.photo, transform: createDefaultPhotoTransform() } }
+
+    case 'setPhotoEffect':
+      if (!PHOTO_EFFECTS.includes(action.effect)) return state
+      return { ...state, photo: { ...state.photo, effect: action.effect } }
+
+    case 'setDateStamp':
+      return { ...state, photo: { ...state.photo, showDateStamp: action.visible } }
 
     case 'setText':
       return {
@@ -116,6 +129,28 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'removeSticker':
       return { ...state, stickers: state.stickers.filter((s) => s.id !== action.id) }
+
+    case 'addComment':
+      if (state.comments.length >= COMMENT_LIMITS.maxCount) return state
+      if (state.comments.some((c) => c.id === action.id)) return state
+      return { ...state, comments: [...state.comments, { id: action.id, author: '', text: '' }] }
+
+    case 'updateComment':
+      return {
+        ...state,
+        comments: state.comments.map((c) =>
+          c.id === action.id
+            ? {
+                id: c.id,
+                author: truncateText(action.patch.author ?? c.author, COMMENT_LIMITS.maxAuthorLength),
+                text: truncateText(action.patch.text ?? c.text, COMMENT_LIMITS.maxTextLength),
+              }
+            : c,
+        ),
+      }
+
+    case 'removeComment':
+      return { ...state, comments: state.comments.filter((c) => c.id !== action.id) }
 
     case 'replaceState':
       return action.state

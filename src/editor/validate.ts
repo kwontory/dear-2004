@@ -1,7 +1,9 @@
 import {
   ASPECT_RATIOS,
   BACKGROUND_IDS,
+  COMMENT_LIMITS,
   FRAME_IDS,
+  PHOTO_EFFECTS,
   PHOTO_SOURCE_LIMITS,
   SCHEMA_VERSION,
   STICKER_KINDS,
@@ -10,6 +12,7 @@ import {
 } from './constants'
 import { clampCounterValue, clampPhotoTransform, clampSticker } from './math'
 import type {
+  CardComment,
   CardText,
   EditorState,
   PhotoLayer,
@@ -76,6 +79,15 @@ function readEnum<T extends string>(value: unknown, path: string, allowed: reado
   return value as T
 }
 
+/** 목록 항목의 id: 비어 있지 않고, 길이 제한 이내이며, 목록 안에서 유일해야 한다. */
+function readUniqueId(value: unknown, path: string, maxLength: number, seen: Set<string>): string {
+  const id = readString(value, path, maxLength)
+  if (id.length === 0) fail(path, '비어 있을 수 없습니다')
+  if (seen.has(id)) fail(path, '중복된 id입니다')
+  seen.add(id)
+  return id
+}
+
 const BASE64_BODY = /^[A-Za-z0-9+/]+={0,2}$/
 
 function readPhotoSource(value: unknown, path: string): PhotoSource | null {
@@ -116,6 +128,8 @@ function readPhoto(value: unknown, path: string): PhotoLayer {
       scale: readNumber(t.scale, `${path}.transform.scale`),
       rotation: readNumber(t.rotation, `${path}.transform.rotation`),
     }),
+    effect: readEnum(obj.effect, `${path}.effect`, PHOTO_EFFECTS),
+    showDateStamp: readBoolean(obj.showDateStamp, `${path}.showDateStamp`),
   }
 }
 
@@ -143,19 +157,29 @@ function readStickers(value: unknown, path: string): Sticker[] {
   return list.map((item, index) => {
     const p = `${path}[${index}]`
     const obj = readObject(item, p)
-    const id = readString(obj.id, `${p}.id`, STICKER_LIMITS.maxIdLength)
-    if (id.length === 0) fail(`${p}.id`, '비어 있을 수 없습니다')
-    if (seenIds.has(id)) fail(`${p}.id`, '중복된 id입니다')
-    seenIds.add(id)
-
     return clampSticker({
-      id,
+      id: readUniqueId(obj.id, `${p}.id`, STICKER_LIMITS.maxIdLength, seenIds),
       kind: readEnum(obj.kind, `${p}.kind`, STICKER_KINDS),
       x: readNumber(obj.x, `${p}.x`),
       y: readNumber(obj.y, `${p}.y`),
       size: readNumber(obj.size, `${p}.size`),
       rotation: readNumber(obj.rotation, `${p}.rotation`),
     })
+  })
+}
+
+function readComments(value: unknown, path: string): CardComment[] {
+  const list = readArray(value, path, COMMENT_LIMITS.maxCount)
+  const seenIds = new Set<string>()
+
+  return list.map((item, index) => {
+    const p = `${path}[${index}]`
+    const obj = readObject(item, p)
+    return {
+      id: readUniqueId(obj.id, `${p}.id`, COMMENT_LIMITS.maxIdLength, seenIds),
+      author: readString(obj.author, `${p}.author`, COMMENT_LIMITS.maxAuthorLength),
+      text: readString(obj.text, `${p}.text`, COMMENT_LIMITS.maxTextLength),
+    }
   })
 }
 
@@ -184,6 +208,7 @@ export function validateEditorState(value: unknown): ParseResult {
           frame: readEnum(theme.frame, 'theme.frame', FRAME_IDS),
         },
         stickers: readStickers(root.stickers, 'stickers'),
+        comments: readComments(root.comments, 'comments'),
       },
     }
   } catch (error) {

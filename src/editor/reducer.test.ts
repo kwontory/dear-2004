@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { ASPECT_RATIOS, COUNTER_MAX, PHOTO_LIMITS, STICKER_LIMITS, TEXT_MAX_LENGTHS } from './constants'
+import { ASPECT_RATIOS, COMMENT_LIMITS, COUNTER_MAX, PHOTO_LIMITS, STICKER_LIMITS, TEXT_MAX_LENGTHS } from './constants'
 import { createDefaultEditorState } from './defaults'
-import { editorReducer, truncateText, type EditorAction } from './reducer'
+import { editorReducer, type EditorAction } from './reducer'
 import type { EditorState } from './types'
 import { validateEditorState } from './validate'
 
@@ -67,11 +67,6 @@ describe('editorReducer', () => {
     expectValid(state)
   })
 
-  it('이모지를 반으로 자르지 않는다', () => {
-    expect(truncateText('ab😀', 3)).toBe('ab')
-    expect(truncateText('ab😀', 4)).toBe('ab😀')
-  })
-
   it('카운터는 0 이상의 정수로 보정된다', () => {
     const state = run([{ type: 'updateCounter', patch: { today: -5, total: 1.6e10 } }])
     expect(state.counter).toMatchObject({ today: 0, total: COUNTER_MAX })
@@ -98,6 +93,41 @@ describe('editorReducer', () => {
       kind: 'star',
     }))
     expect(run(actions).stickers).toHaveLength(STICKER_LIMITS.maxCount)
+  })
+
+  it('사진 효과 / 날짜 스탬프는 새 사진을 올려도 유지된다', () => {
+    const state = run([
+      { type: 'setPhotoEffect', effect: 'mono' },
+      { type: 'setDateStamp', visible: false },
+      { type: 'setPhoto', source: SOURCE },
+    ])
+    expect(state.photo).toMatchObject({ effect: 'mono', showDateStamp: false, source: SOURCE })
+    expect(run([{ type: 'setPhotoEffect', effect: 'sepia' as never }], state)).toBe(state)
+    expectValid(state)
+  })
+
+  it('댓글 추가 / 수정 / 삭제', () => {
+    let state = run([
+      { type: 'addComment', id: 'c1' },
+      { type: 'addComment', id: 'c1' }, // 중복 id 무시
+      { type: 'addComment', id: 'c2' },
+      { type: 'updateComment', id: 'c1', patch: { author: '단짝♡' } },
+      { type: 'updateComment', id: 'c1', patch: { text: '퍼가요~♡'.repeat(50) } },
+    ])
+    expect(state.comments.map((c) => c.id)).toEqual(['c1', 'c2'])
+    expect(state.comments[0].author).toBe('단짝♡')
+    expect(state.comments[0].text).toHaveLength(COMMENT_LIMITS.maxTextLength)
+    state = editorReducer(state, { type: 'removeComment', id: 'c1' })
+    expect(state.comments.map((c) => c.id)).toEqual(['c2'])
+    expectValid(state)
+  })
+
+  it('댓글 최대 개수를 넘지 않는다', () => {
+    const actions: EditorAction[] = Array.from({ length: COMMENT_LIMITS.maxCount + 3 }, (_, i) => ({
+      type: 'addComment',
+      id: `c${i}`,
+    }))
+    expect(run(actions).comments).toHaveLength(COMMENT_LIMITS.maxCount)
   })
 
   it('원본 상태를 변경하지 않는다', () => {

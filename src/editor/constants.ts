@@ -20,6 +20,9 @@ export const FRAME_IDS = ['minihome', 'diary', 'album', 'memo'] as const
 
 export const STICKER_KINDS = ['star', 'heart', 'cloud', 'sparkle', 'ribbon', 'smile'] as const
 
+/** original=원본, soft=뽀샤시, faded=빛바램, mono=흑백 */
+export const PHOTO_EFFECTS = ['original', 'soft', 'faded', 'mono'] as const
+
 /** 사진 변환 범위. scale 1 = 사진 영역을 꽉 채우는(cover) 크기. */
 export const PHOTO_LIMITS = {
   minScale: 0.1,
@@ -55,3 +58,16 @@ export const TEXT_MAX_LENGTHS = {
 } as const
 
 export const COUNTER_MAX = 9_999_999
+
+/** 카드 아래 "ㄴ 닉네임 : 댓글" 줄 */
+export const COMMENT_LIMITS = {
+  maxCount: 5,
+  maxAuthorLength: 20,
+  maxTextLength: 60,
+  maxIdLength: 64,
+} as const
+
+/** 문구 입력칸 옆 "특수문자 넣기" 버튼 */
+export const SPECIAL_CHARACTERS = [
+  '★', '☆', '♡', '♥', '♬', '♪', '…', '~', 'ㆀ', '⊙', '▶', '『', '』', '─', '※', '^^',
+] as const

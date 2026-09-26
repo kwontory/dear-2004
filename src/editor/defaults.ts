@@ -13,6 +13,8 @@ export function createDefaultEditorState(): EditorState {
     photo: {
       source: null,
       transform: createDefaultPhotoTransform(),
+      effect: 'soft',
+      showDateStamp: true,
     },
     text: {
       title: '그땐 그랬지...',
@@ -32,5 +34,6 @@ export function createDefaultEditorState(): EditorState {
       frame: 'minihome',
     },
     stickers: [],
+    comments: [],
   }
 }

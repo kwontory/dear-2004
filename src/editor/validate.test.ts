@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  COMMENT_LIMITS,
   PHOTO_LIMITS,
   STICKER_LIMITS,
   TEXT_MAX_LENGTHS,
@@ -20,12 +21,18 @@ function fullState(): EditorState {
   state.photo = {
     source: { dataUrl: TINY_PNG, width: 1, height: 1 },
     transform: { offsetX: 0.25, offsetY: -0.5, scale: 1.8, rotation: 15 },
+    effect: 'faded',
+    showDateStamp: false,
   }
   state.text.body = '방학 첫날.\n떡볶이 😀✨'
   state.theme = { background: 'pink-check', frame: 'diary' }
   state.stickers = [
     { id: 's1', kind: 'star', x: 0.1, y: 0.9, size: 0.12, rotation: -20 },
     { id: 's2', kind: 'heart', x: 0.5, y: 0.5, size: 0.2, rotation: 0 },
+  ]
+  state.comments = [
+    { id: 'c1', author: '단짝♡', text: '헐 우리 사진이ㄷㅏ ㅋㅋㅋ' },
+    { id: 'c2', author: '옆반친구', text: '퍼가요~♡' },
   ]
   return state
 }
@@ -140,6 +147,40 @@ describe('잘못된 JSON 거부 (TC-25 ~ TC-27)', () => {
     expectRejected(mutated((raw) => { raw.stickers[0].kind = 'skull' }), 'stickers[0].kind')
     expectRejected(mutated((raw) => { raw.stickers[1].id = 's1' }), '중복')
     expectRejected(mutated((raw) => { raw.stickers[0].id = '' }), 'stickers[0].id')
+  })
+})
+
+describe('사진 효과 / 날짜 스탬프 / 댓글 검증', () => {
+  it('알 수 없는 사진 효과와 잘못된 스탬프 타입을 거부한다', () => {
+    expectRejected(mutated((raw) => { raw.photo.effect = 'sepia' }), 'photo.effect')
+    expectRejected(mutated((raw) => { raw.photo.showDateStamp = 1 }), 'photo.showDateStamp')
+    expectRejected(mutated((raw) => { delete raw.photo.effect }), 'photo.effect')
+  })
+
+  it('댓글 배열 / 필드 / 길이 / id 오류를 거부한다', () => {
+    expectRejected(mutated((raw) => { delete raw.comments }), 'comments')
+    expectRejected(mutated((raw) => { raw.comments = 'hi' }), 'comments')
+    expectRejected(mutated((raw) => { raw.comments[0].text = null }), 'comments[0].text')
+    expectRejected(
+      mutated((raw) => { raw.comments[0].author = 'a'.repeat(COMMENT_LIMITS.maxAuthorLength + 1) }),
+      'comments[0].author',
+    )
+    expectRejected(mutated((raw) => { raw.comments[1].id = 'c1' }), '중복')
+    expectRejected(
+      mutated((raw) => {
+        raw.comments = Array.from({ length: COMMENT_LIMITS.maxCount + 1 }, (_, i) => ({
+          id: `c${i}`, author: '', text: '',
+        }))
+      }),
+      'comments',
+    )
+  })
+
+  it('빈 닉네임·빈 댓글은 허용한다', () => {
+    const result = validateEditorState(
+      mutated((raw) => { raw.comments = [{ id: 'x', author: '', text: '' }] }),
+    )
+    expect(result.ok).toBe(true)
   })
 })
 
