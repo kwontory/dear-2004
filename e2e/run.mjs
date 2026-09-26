@@ -51,18 +51,23 @@ function runSuite(file) {
 await waitForServer()
 let pass = 0
 let fail = 0
+let skip = 0
 for (const file of suites) {
   const { code, out } = await runSuite(file)
   const lines = out.split('\n')
   const p = lines.filter((l) => l.startsWith('PASS')).length
   const f = lines.filter((l) => l.startsWith('FAIL'))
+  const skipped = lines.filter((l) => l.startsWith('SKIP'))
   const crashed = code !== 0 || p + f.length === 0
   pass += p
   fail += f.length + (crashed ? 1 : 0)
-  console.log(`${crashed || f.length ? '✗' : '✓'} ${file.padEnd(22)} ${p} passed${f.length ? `, ${f.length} failed` : ''}`)
-  for (const line of f) console.log(`    ${line}`)
+  skip += skipped.length
+  console.log(
+    `${crashed || f.length ? '✗' : '✓'} ${file.padEnd(22)} ${p} passed${f.length ? `, ${f.length} failed` : ''}${skipped.length ? `, ${skipped.length} skipped` : ''}`,
+  )
+  for (const line of [...f, ...skipped]) console.log(`    ${line}`)
   if (crashed) console.log(out.split('\n').filter((l) => !l.startsWith('PASS')).slice(0, 12).map((l) => `    ${l}`).join('\n'))
 }
-console.log(`\n브라우저 E2E: ${pass} passed, ${fail} failed (${suites.length} suites)`)
+console.log(`\n브라우저 E2E: ${pass} passed, ${fail} failed${skip ? `, ${skip} skipped` : ''} (${suites.length} suites)`)
 stop()
 process.exit(fail > 0 ? 1 : 0)

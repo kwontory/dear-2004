@@ -53,7 +53,10 @@ const check = (name, cond, detail) => results.push(`${cond ? 'PASS' : 'FAIL'}  $
   await page.close()
 }
 
-{ // 모바일 터치: 스티커를 끌면 스크롤 안 됨, 빈 곳을 끌면 스크롤
+// 실제 터치 입력(CDP)은 Chromium에서만 보낼 수 있다
+if (browser.browserType().name() !== 'chromium') {
+  results.push('SKIP  모바일 터치 끌기·스크롤 (Chromium 전용 터치 입력)')
+} else { // 모바일 터치: 스티커를 끌면 스크롤 안 됨, 빈 곳을 끌면 스크롤
   const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 })
   const page = await ctx.newPage()
   const errors = []; page.on('pageerror', (e) => errors.push(e.message))

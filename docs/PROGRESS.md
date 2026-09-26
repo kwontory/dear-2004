@@ -301,8 +301,8 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 ## Known Issues
 
 - 폰트에서 한자·가나·그리스/키릴 문자를 뺐다. 사용자가 이런 글자를 쓰면 기본 글꼴(monospace)로 보여 기기마다 달라질 수 있다
-- 실제 기기(iOS Safari, Samsung Internet, Android Chrome) 확인은 아직 못 했다. 이 환경에서는 WebKit 실행에 시스템 라이브러리(GTK4 등, sudo 필요)가 없어 Safari 엔진 테스트도 못 돌렸다
-- 스티커 끌기 E2E의 모바일 터치 부분은 Chromium CDP를 쓰므로 WebKit으로 돌리면 실패한다
+- 실제 기기(iOS Safari, Samsung Internet, Android Chrome) 확인은 아직 못 했다 (WebKit 엔진 E2E는 통과)
+- 스티커 끌기 E2E의 모바일 터치 부분은 Chromium CDP 전용이라 WebKit에서는 SKIP 된다 → 실제 iPhone에서 손으로 확인 필요
 - 기기가 웹폰트까지 강제로 바꾸는 경우(일부 제조사 WebView 설정)는 FontFace 로드 자체가 무력화될 수 있어 막을 수 없다.
   그 경우에도 줄바꿈은 실제 측정값으로 계산되므로 글자가 칸 밖으로 넘치지는 않는다
 - 업로드 이미지를 data URL로 저장하므로 localStorage 용량(약 5MB)을 넘을 수 있다.
@@ -315,6 +315,7 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 ```text
 build: PASS
 browser E2E (repo): `npm run test:e2e` → 123 passed, 0 failed (9 suites, Chromium)
+browser E2E WebKit 26.6 (Safari 엔진): `E2E_BROWSER=webkit npm run test:e2e` → 118 passed, 0 failed, 1 skipped (터치 끌기)
 automated tests: PASS (167 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
 browser JSON flow: PASS (9 시나리오) — TC-23 내보내기, TC-24 왕복 후 같은 카드, TC-25 문법 오류, TC-26 다른 형식,
   TC-27 미지원 버전, 잘못된 화면비·Infinity·SVG 데이터 거부 + 모두 기존 상태 유지
@@ -355,7 +356,7 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 - 실제 기기 확인 (사용자): iOS Safari·Samsung Internet·Android Chrome 확인
   - 확인 포인트: 입력칸 포커스 시 화면 확대 없음, 스티커 끌기 중 스크롤 없음, PNG/JPEG 저장, 템플릿 새로고침 유지, 사용자 글꼴 설정
-- WebKit E2E: `sudo npx playwright-core install-deps webkit` 후 `E2E_BROWSER=webkit npm run test:e2e`
+- WebKit E2E: 시스템 라이브러리 설치 완료(2026-09-26, 공식 Ubuntu 저장소·GPG 서명 확인). `E2E_BROWSER=webkit npm run test:e2e`
 - 공개 배포: 보류 (사용자가 원할 때 진행)
 
 ### Verification
