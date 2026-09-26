@@ -1,0 +1,64 @@
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.app-header {
+  text-align: center;
+}
+
+.app-title {
+  font-size: 28px;
+  color: var(--color-accent-strong);
+  letter-spacing: 1px;
+}
+
+.app-subtitle {
+  color: var(--color-text-muted);
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.panel-title {
+  font-size: 15px;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.panel-placeholder {
+  color: var(--color-text-muted);
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* 좁은 화면: 미리보기를 위로, 편집 도구를 아래로 */
+@media (max-width: 720px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-preview {
+    order: -1;
+  }
+}
