@@ -39,7 +39,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 - [x] 폰트 용량 축소: 1.1MB → 첫 로딩 약 194KB (core/rare 분할, 드문 한글은 필요할 때만)
 - [x] 브라우저 E2E를 저장소에 추가 (`e2e/`, `npm run test:e2e`, 9 스위트 123 시나리오)
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
-- [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
+- [x] 디자인 시안 (Claude 디자인 캔버스, 비공개 — 링크는 저장소에 남기지 않음)
 
 
 ## In Progress
@@ -146,6 +146,17 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 문자열·배열이 상한 초과 → 거부
 - 유한 숫자의 범위 초과 → reducer와 같은 clamp 함수로 보정
 - 알 수 없는 추가 필드 → 제거
+
+
+### 21. 보안 점검 (2026-09-26)
+
+- 커밋 기록 전체·작업 폴더 전체 점검: 비밀키·토큰·비밀번호·패스키·개인 이메일·실명·홈 경로 없음.
+  커밋 작성자는 GitHub noreply 주소. `npm audit` 0건, 런타임 의존성은 react·react-dom뿐
+- 코드: innerHTML·eval 등 HTML/스크립트 실행 경로 없음, 외부 서버 전송 없음, 다운로드 파일 이름에 사용자 입력 없음
+- 비공개 디자인 캔버스 링크는 문서와 **커밋 기록 전체에서 제거**(사용자 요청, git 기록 재작성). 저장소에 다시 넣지 않는다
+- `.gitignore`: `.env*`, `*.pem`, `*.key`, `.npmrc`, `.claude/`, `.mcp.json`
+- 템플릿 탭에 공용 컴퓨터 안내(사진이 브라우저에 남으니 다 쓰면 지우기)
+- 배포할 때 할 일: CSP 헤더 추가 (예: `default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'`)
 
 
 ### 20. 에셋 출처
@@ -263,7 +274,7 @@ EditorState ─ computeLayout(ratio, frame) ─┐
 
 ### 11. Design (v2 — 그시절 감성 리디자인)
 
-디자인 시안: (비공개 디자인 캔버스)
+디자인 시안: Claude 디자인 캔버스 (비공개, 링크는 저장소에 남기지 않음)
 
 v1(파스텔 스크랩북)은 "촌스럽기만 하고 그시절 감성이 없다"는 피드백으로 폐기.
 v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·화면 배치는 복제하지 않는다.
