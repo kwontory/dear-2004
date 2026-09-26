@@ -1,11 +1,14 @@
 import { useReducer } from 'react'
 import './App.css'
+import { CardPreview } from './components/CardPreview'
 import { PhotoUpload } from './components/PhotoUpload'
 import { createDefaultEditorState } from './editor/defaults'
 import { editorReducer } from './editor/reducer'
+import { useLoadedPhoto } from './hooks/useLoadedPhoto'
 
 function App() {
   const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
+  const photo = useLoadedPhoto(state.photo.source)
 
   return (
     <div className="app">
@@ -28,7 +31,7 @@ function App() {
 
         <section className="panel panel-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading" className="panel-title">미리보기</h2>
-          <p className="panel-placeholder">카드 미리보기가 여기에 표시됩니다.</p>
+          <CardPreview state={state} photo={photo} />
         </section>
       </main>
 
