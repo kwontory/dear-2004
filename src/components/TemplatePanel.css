@@ -4,6 +4,22 @@
   gap: 10px;
 }
 
+.privacy-note {
+  padding: 10px 12px;
+  border: 1px dashed #c9a24b;
+  background: #fffaf0;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.privacy-note p {
+  margin: 0;
+}
+
+.privacy-note p + p {
+  margin-top: 4px;
+}
+
 .template-create {
   display: flex;
   flex-direction: column;
@@ -21,6 +37,13 @@
 .template-create-row input,
 .template-rename input {
   flex: 1 1 auto;
+}
+
+/* 버튼 글자가 두 줄로 쪼개지지 않게 */
+.template-create-row .retro-button,
+.template-rename .retro-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .template-notice {

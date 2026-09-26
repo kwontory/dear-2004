@@ -73,6 +73,17 @@ export function TemplatePanel({ state, onLoad }: TemplatePanelProps) {
 
   return (
     <div className="template-panel">
+      <aside className="privacy-note" aria-label="개인정보 안내">
+        <p>
+          <strong>※ 공용 컴퓨터에서 쓰고 있나요?</strong>
+        </p>
+        <p>
+          사진과 글은 어디에도 올라가지 않고 지금 쓰는 브라우저 안에만 저장돼요. 그래서 템플릿을 저장해 두면
+          다음 사람이 이 컴퓨터를 켰을 때 사진까지 그대로 보일 수 있어요.
+        </p>
+        <p>PC방·학교·회사 컴퓨터라면 다 쓰고 나서 저장한 템플릿을 꼭 지워 주세요.</p>
+      </aside>
+
       <form className="template-create" onSubmit={handleCreate}>
         <label htmlFor={nameId}>템플릿 이름</label>
         <div className="template-create-row">
