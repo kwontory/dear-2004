@@ -25,3 +25,13 @@ dist-ssr
 
 # E2E 결과물 (스크린샷, 다운로드 파일)
 e2e/.output
+
+# 비밀·개인 설정이 실수로 커밋되지 않도록
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npmrc
+.claude/
+.mcp.json
