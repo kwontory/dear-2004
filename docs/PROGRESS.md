@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-핵심 기능·디자인 적용 완료. 배포는 보류(사용자 결정, 2026-09-26). 남은 것: 실제 기기 확인
+핵심 기능·디자인 적용 완료. Vercel 공개 배포 완료(2026-09-27, https://dear-2004.vercel.app). 남은 것: 실제 기기 확인
 
 
 ## Completed
@@ -44,7 +44,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## In Progress
 
-- 없음 (남은 것: `Next`의 17번 실제 기기 확인, 19번 공개 배포)
+- 없음 (남은 것: `Next`의 17번 실제 기기 확인)
 
 
 ## Next
@@ -70,8 +70,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 17. 반응형 및 접근성 정리 — 320/375/768/1024px 가로 넘침 없음, 탭 키보드 조작, 사용자 글꼴 강제 확인 (자동 테스트 완료).
     실제 기기(iOS Safari, Samsung Internet, Android Chrome) 확인 남음
 18. ~~production build~~ (PASS)
-19. 공개 배포 — 보류 (사용자 결정). 배포 전 확인 사항 중 스티커 출처(사용자 AI 제작, `### 20`)와
-    폰트 용량 축소(`### 19`)는 완료. 배포 시 CSP 헤더 추가 (`### 21`)
+19. ~~공개 배포~~ (완료, Vercel. `### 22` 참고)
 
 
 ## Important Technical Decisions
@@ -150,6 +149,19 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 알 수 없는 추가 필드 → 제거
 
 
+### 22. 배포 (Vercel, 2026-09-27)
+
+- 주소: https://dear-2004.vercel.app (Vercel 프로젝트 `dear-2004`, CLI로 배포: `npx vercel@latest deploy --prod`)
+- GitHub 자동 배포는 연결되지 않았다 (Vercel이 private 저장소에 접근 권한 없음). 코드를 바꾸면 CLI로 다시 배포한다
+- `vercel.json`: 빌드 설정 + 보안 헤더 (CSP `default-src 'self'`, `img-src 'self' data: blob:`, `style-src 'self' 'unsafe-inline'`,
+  `object-src 'none'`, `frame-ancestors 'none'`, `form-action 'none'` / nosniff / no-referrer / Permissions-Policy)
+- `vite.config.ts`의 preview가 `vercel.json` 헤더를 그대로 읽는다 → 로컬 E2E도 배포와 같은 CSP에서 돈다
+- `.vercelignore`: 빌드에 필요한 파일(src, public, 설정)만 업로드. docs·README·CLAUDE.md·e2e·scripts·fonts-src는 올리지 않는다
+- 배포 확인: 보안 헤더 적용, `/docs/*`·`/README.md`·`/src/*`·`/package.json`·`/.git/*`·source map 모두 404,
+  `/_src`는 Vercel 로그인 필요. 배포 주소 대상 E2E 134 passed
+- 배포 주소로 E2E 돌리기: `node e2e/<suite>.e2e.mjs https://dear-2004.vercel.app/ e2e/.output/prod`
+  (프록시 환경이면 `HTTPS_PROXY`를 브라우저도 따른다)
+
 ### 21. 보안 점검 (2026-09-26)
 
 - 커밋 기록 전체·작업 폴더 전체 점검: 비밀키·토큰·비밀번호·패스키·개인 이메일·실명·홈 경로 없음.
@@ -158,7 +170,7 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 비공개 디자인 캔버스 링크는 문서와 **커밋 기록 전체에서 제거**(사용자 요청, git 기록 재작성). 저장소에 다시 넣지 않는다
 - `.gitignore`: `.env*`, `*.pem`, `*.key`, `.npmrc`, `.claude/`, `.mcp.json`
 - 템플릿 탭에 공용 컴퓨터 안내(사진이 브라우저에 남으니 다 쓰면 지우기)
-- 배포할 때 할 일: CSP 헤더 추가 (예: `default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'`)
+- CSP 등 보안 헤더는 배포 설정(`vercel.json`)에 넣었다 → `### 22`
 
 
 ### 20. 에셋 출처
@@ -365,6 +377,7 @@ manual core flow: 업로드→편집→다운로드→템플릿→JSON 흐름을
 
 - 보안 점검 후 커밋 기록 정리 (비공개 링크·참고 이미지 서술 제거), README 작성
 - private 저장소(`kwontory/dear-2004`)에 push, `main`이 `origin/main` 추적
+- Vercel 배포 (https://dear-2004.vercel.app) + 보안 헤더, 배포 주소 대상 E2E 134 passed
 - PROGRESS.md 중 실제와 맞지 않던 항목 정리 (완료된 기능의 "미구현" 표기, 해결된 Known Issues, 옛 세션 요약)
 
 ### Next action
@@ -372,14 +385,14 @@ manual core flow: 업로드→편집→다운로드→템플릿→JSON 흐름을
 - 실제 기기 확인 (사용자): iOS Safari·Samsung Internet·Android Chrome 확인
   - 확인 포인트: 입력칸 포커스 시 화면 확대 없음, 스티커 끌기 중 스크롤 없음, PNG/JPEG 저장, 템플릿 새로고침 유지, 사용자 글꼴 설정
 - WebKit E2E: `E2E_BROWSER=webkit npm run test:e2e`
-- 공개 배포: 보류 (사용자가 원할 때 진행, CSP 헤더 포함)
+- 코드 변경 후 재배포: `npx vercel@latest deploy --prod` (GitHub 자동 배포 미연결)
 
 ### Verification
 
 ```text
 build: PASS
 tests: PASS (177)
-browser E2E: PASS (Chromium 134 / WebKit 129 + 1 skip)
+browser E2E: PASS (Chromium 134 / WebKit 129 + 1 skip / 배포 주소 134)
 ```
 
 
