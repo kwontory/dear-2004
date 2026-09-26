@@ -1,0 +1,100 @@
+.template-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-create {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.template-create-row,
+.template-rename {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.template-create-row input,
+.template-rename input {
+  flex: 1 1 auto;
+}
+
+.template-notice {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #b8d4e6;
+  background: #f2f8fc;
+  font-size: 13px;
+}
+
+.template-notice-error {
+  border-color: #e8a0b6;
+  background: #fff4f7;
+  color: #a3264f;
+}
+
+.template-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.template-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 2px;
+  border-bottom: 1px dotted #bcbcbc;
+}
+
+.template-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.template-name {
+  color: #2a6db0;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.template-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+/* 옛날 웹의 밑줄 텍스트 링크 버튼. 누르기 쉽게 최소 높이를 둔다 */
+.text-button {
+  min-height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: #2a6db0;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.text-button-danger {
+  color: #a3264f;
+}
+
+.text-button:focus-visible {
+  outline: 2px solid #2f7fa8;
+  outline-offset: 2px;
+}

@@ -6,6 +6,7 @@ import { ExportButtons } from './components/ExportButtons'
 import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
 import { SelectedStickerControls, StickerPicker } from './components/StickerControls'
+import { TemplatePanel } from './components/TemplatePanel'
 import { TextControls } from './components/TextControls'
 import { STICKER_LIMITS } from './editor/constants'
 import type { StickerKind } from './editor/types'
@@ -102,6 +103,17 @@ function App() {
           <section className="control-section" aria-labelledby="text-heading">
             <h3 id="text-heading" className="control-section-title">■ 문구 쓰기</h3>
             <TextControls state={state} dispatch={dispatch} />
+          </section>
+
+          <section className="control-section" aria-labelledby="template-heading">
+            <h3 id="template-heading" className="control-section-title">■ 내 템플릿</h3>
+            <TemplatePanel
+              state={state}
+              onLoad={(loaded) => {
+                setSelectedStickerId(null)
+                dispatch({ type: 'replaceState', state: loaded })
+              }}
+            />
           </section>
         </section>
 
