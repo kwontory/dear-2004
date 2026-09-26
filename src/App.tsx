@@ -3,6 +3,7 @@ import './App.css'
 import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
 import { ExportButtons } from './components/ExportButtons'
+import { JsonBackup } from './components/JsonBackup'
 import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
 import { SelectedStickerControls, StickerPicker } from './components/StickerControls'
@@ -112,6 +113,17 @@ function App() {
               onLoad={(loaded) => {
                 setSelectedStickerId(null)
                 dispatch({ type: 'replaceState', state: loaded })
+              }}
+            />
+          </section>
+
+          <section className="control-section" aria-labelledby="json-heading">
+            <h3 id="json-heading" className="control-section-title">■ 파일로 백업</h3>
+            <JsonBackup
+              state={state}
+              onImport={(imported) => {
+                setSelectedStickerId(null)
+                dispatch({ type: 'replaceState', state: imported })
               }}
             />
           </section>

@@ -98,3 +98,25 @@
   outline: 2px solid #2f7fa8;
   outline-offset: 2px;
 }
+
+.json-backup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.json-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.json-backup-actions .retro-button {
+  flex: 1 1 8em;
+}
+
+.json-error-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+}
