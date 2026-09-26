@@ -4,7 +4,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="app-title">그땐 그랬지...</h1>
+        <h1 className="app-title">그땐 그랬지,,</h1>
         <p className="app-subtitle">나만의 미니홈피 감성 카드 만들기</p>
       </header>
 
