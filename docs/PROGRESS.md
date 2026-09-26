@@ -35,6 +35,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 - [x] JSON 내보내기/불러오기 UI (TC-23~27)
 - [x] 카드 틀 4종(감성 사진·미니홈피·사진첩·다이어리) + 스킨 4종 renderer
 - [x] 편집기 바인더 디자인 + 인덱스 탭(사진/문구/꾸미기/템플릿) + 모바일 배치
+- [x] 감성 사진 틀 → 폴라로이드, 단색 스킨 + 색상 팔레트, 스티커 구멍 메움 (2026-09-26 시안 컨펌 후 반영)
 - [x] 폰트 용량 축소: 1.1MB → 첫 로딩 약 194KB (core/rare 분할, 드문 한글은 필요할 때만)
 - [x] 브라우저 E2E를 저장소에 추가 (`e2e/`, `npm run test:e2e`, 9 스위트 123 시나리오)
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
@@ -150,6 +151,8 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 ### 20. 에셋 출처
 
 - 스티커 `public/stickers/*.png`: **사용자가 AI로 직접 생성한 이미지**(참고 시안 "스티커 참고용")에서 잘라냄 — 사용자 소유
+  - 안쪽 반투명 구멍을 흰 바탕 합성색으로 메우고 불투명하게 함. 테두리 하트·말풍선은 안쪽 전체를 흰색으로 (사용자 컨펌)
+  - 처리 기록: `scripts/fill-sticker-holes.mjs`
 - 폰트 Galmuri: SIL OFL 1.1 (`public/fonts/Galmuri-OFL.md`, 원본 `fonts-src/`)
 
 
@@ -171,12 +174,16 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 `src/render/layout.ts`(틀별 영역), `src/render/frames.ts`(틀 장식·글자), `src/render/skins.ts`(배경).
 
 - 그리는 순서: 스킨 → 틀 장식 → 사진·날짜 스탬프 → 틀 위 장식(다이어리 테이프) → 글자 → 스티커
-- memo(감성 사진): 흰 바탕(스킨 안 보임), 본문 회색, `by. 서명`
+- memo(감성 사진) = **폴라로이드** (사용자 컨펌): 스킨 위에 그림자 진 흰 인화지(#fffefa), 위·옆 여백 36px,
+  사진 = 안쪽 높이의 66.4%, 아래 넓은 여백에 본문(회색)과 `by. 서명`. 사진 유무와 관계없이 항상 폴라로이드
 - minihome(미니홈피): 바인더(점 무늬) + 왼쪽 프로필(카운터, 프로필 사진, TODAY is.., 소개글=본문, 닉네임, 날짜)
   + 오른쪽(제목, BGM 박스, 사진, 댓글 최대 3줄, `댓글(n) | 스크랩 | 퍼가기`) + 인덱스 탭 그림
 - album(사진첩): 윗줄(카운터·BGM), `[사진첩] 제목` + 날짜, 사진, 본문 3줄, `스크랩 0 | 퍼가기 | 댓글 n` + 댓글 최대 5줄, 서명 알약
 - diary(다이어리): 줄 노트(44px) + 여백선, 날짜·기분, 제목, 기울인 사진 + 테이프, 줄 위 본문, `from. 서명`
-- 스킨: sky-dots / pink-check / cream-diary / pastel-gradient(160deg, 4:5 시안 요청). 패널 테두리 색은 스킨별 accent
+- 스킨: sky-dots / pink-check / cream-diary / pastel-gradient(160deg, 4:5 시안 요청) / **solid**(사용자 지정 단색).
+  패널 테두리 색은 스킨별 accent, 단색은 고른 색을 22% 어둡게
+- 단색: `theme.solidColor`(#rrggbb, 소문자로 저장). 네이티브 color input + 빠른 선택 8색 (`SOLID_COLOR_PRESETS`).
+  JSON·템플릿 불러올 때 solidColor가 없으면 기본색 `#f7d6e0` (단색 추가 이전 데이터 호환), 형식이 틀리면 거부
 - 기본값: 감성 사진 틀 + 파스텔 스킨
 - 편집기: 잿빛 하늘 배경(#c3ced6) + 바인더, 인덱스 탭은 WAI-ARIA tablist(화살표·Home·End), 비활성 탭은 hidden으로 유지
 
@@ -314,9 +321,9 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-browser E2E (repo): `npm run test:e2e` → 123 passed, 0 failed (9 suites, Chromium)
-browser E2E WebKit 26.6 (Safari 엔진): `E2E_BROWSER=webkit npm run test:e2e` → 118 passed, 0 failed, 1 skipped (터치 끌기)
-automated tests: PASS (167 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+browser E2E (repo): `npm run test:e2e` → 134 passed, 0 failed (10 suites, Chromium)
+browser E2E WebKit 26.6 (Safari 엔진): `E2E_BROWSER=webkit npm run test:e2e` → 129 passed, 0 failed, 1 skipped (터치 끌기)
+automated tests: PASS (177 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
 browser JSON flow: PASS (9 시나리오) — TC-23 내보내기, TC-24 왕복 후 같은 카드, TC-25 문법 오류, TC-26 다른 형식,
   TC-27 미지원 버전, 잘못된 화면비·Infinity·SVG 데이터 거부 + 모두 기존 상태 유지
 browser tabs/responsive: PASS (7 시나리오) — 탭 키보드 조작, 320/768/1024px 모든 탭 가로 넘침 없음
