@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# E2E 결과물 (스크린샷, 다운로드 파일)
+e2e/.output

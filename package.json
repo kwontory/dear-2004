@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fonts:subset": "node scripts/subset-fonts.mjs"
+    "fonts:subset": "node scripts/subset-fonts.mjs",
+    "test:e2e": "npm run build && node e2e/run.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
@@ -23,6 +24,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "fontkit": "^2.0.4",
     "oxlint": "^1.81.0",
+    "playwright-core": "~1.63.0",
     "subset-font": "^2.9.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
