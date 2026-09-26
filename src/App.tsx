@@ -1,6 +1,12 @@
+import { useReducer } from 'react'
 import './App.css'
+import { PhotoUpload } from './components/PhotoUpload'
+import { createDefaultEditorState } from './editor/defaults'
+import { editorReducer } from './editor/reducer'
 
 function App() {
+  const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
+
   return (
     <div className="app">
       <header className="app-header">
@@ -11,7 +17,13 @@ function App() {
       <main className="app-main">
         <section className="panel panel-controls" aria-labelledby="controls-heading">
           <h2 id="controls-heading" className="panel-title">꾸미기</h2>
-          <p className="panel-placeholder">편집 도구가 여기에 들어갑니다.</p>
+          <section className="control-section" aria-labelledby="upload-heading">
+            <h3 id="upload-heading" className="control-section-title">■ 사진 올리기</h3>
+            <PhotoUpload
+              source={state.photo.source}
+              onUpload={(source) => dispatch({ type: 'setPhoto', source })}
+            />
+          </section>
         </section>
 
         <section className="panel panel-preview" aria-labelledby="preview-heading">
