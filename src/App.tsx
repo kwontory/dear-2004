@@ -1,6 +1,8 @@
 import { useReducer } from 'react'
 import './App.css'
+import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
+import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
 import { createDefaultEditorState } from './editor/defaults'
 import { editorReducer } from './editor/reducer'
@@ -20,12 +22,41 @@ function App() {
       <main className="app-main">
         <section className="panel panel-controls" aria-labelledby="controls-heading">
           <h2 id="controls-heading" className="panel-title">꾸미기</h2>
+
           <section className="control-section" aria-labelledby="upload-heading">
             <h3 id="upload-heading" className="control-section-title">■ 사진 올리기</h3>
             <PhotoUpload
               source={state.photo.source}
               onUpload={(source) => dispatch({ type: 'setPhoto', source })}
             />
+          </section>
+
+          <section className="control-section" aria-labelledby="ratio-heading">
+            <h3 id="ratio-heading" className="control-section-title">■ 화면비</h3>
+            <AspectRatioSelector
+              value={state.aspectRatio}
+              onChange={(aspectRatio) => dispatch({ type: 'setAspectRatio', aspectRatio })}
+            />
+          </section>
+
+          <section className="control-section" aria-labelledby="adjust-heading">
+            <div className="control-section-header">
+              <h3 id="adjust-heading" className="control-section-title">■ 사진 조절</h3>
+              <button
+                type="button"
+                className="retro-button retro-button-small"
+                disabled={state.photo.source === null}
+                onClick={() => dispatch({ type: 'resetPhotoTransform' })}
+              >
+                초기화
+              </button>
+            </div>
+            <PhotoAdjust photo={state.photo} dispatch={dispatch} />
+          </section>
+
+          <section className="control-section" aria-labelledby="effect-heading">
+            <h3 id="effect-heading" className="control-section-title">■ 사진 효과</h3>
+            <PhotoEffectSelector photo={state.photo} date={state.text.date} dispatch={dispatch} />
           </section>
         </section>
 
