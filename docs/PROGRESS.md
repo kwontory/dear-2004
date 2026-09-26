@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (Canvas renderer 1차 완료 → 화면비 선택 / 사진 조절 UI부터)
+Core editor 구현 (화면비·사진 조절 UI 완료 → 문구 렌더링부터)
 
 
 ## Completed
@@ -27,6 +27,7 @@ Core editor 구현 (Canvas renderer 1차 완료 → 화면비 선택 / 사진 �
 - [x] 이미지 업로드 + 파일 검증 (`src/upload/`, `src/components/PhotoUpload.tsx`), App에 `useReducer(editorReducer)` 연결
 - [x] Canvas renderer 1차 (`src/render/`): 배경, 사진 cover 배치 + offset/scale/rotation, 사진 효과 4종, 날짜 스탬프
 - [x] CardPreview: export와 같은 픽셀 크기로 그리고 CSS로만 축소 (preview == export 픽셀 동일 확인)
+- [x] 화면비 선택 UI, 사진 조절(확대·좌우·위아래·회전·초기화), 사진 효과 선택, 날짜 스탬프 켜기 + 날짜 입력
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
 
@@ -45,8 +46,8 @@ Core editor 구현 (Canvas renderer 1차 완료 → 화면비 선택 / 사진 �
 4. ~~이미지 업로드 구현~~ (완료)
 5. ~~PNG/JPEG 파일 검증 구현~~ (완료)
 6. ~~Canvas renderer 구현~~ (1차 완료: 사진·효과·스탬프. 글자·틀별 레이아웃은 9·10단계에서 추가)
-7. 1:1 / 4:5 / 9:16 화면비 구현
-8. 이미지 위치/크기 조절 구현
+7. ~~1:1 / 4:5 / 9:16 화면비 구현~~ (완료)
+8. ~~이미지 위치/크기 조절 구현~~ (완료, 슬라이더. 미리보기 드래그는 미구현)
 9. 텍스트 입력 구현
 10. 레트로 미니홈피 테마 구현
 11. ~~스티커 구현~~ (보류: 사용자 요청으로 제외)
@@ -219,7 +220,9 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (103 tests — EditorState / reducer / text / upload / render)
+automated tests: PASS (107 tests — EditorState / reducer / text / upload / render / slider 변환)
+browser controls flow: PASS (18 시나리오) — 사진 전 비활성, 화면비 3종 캔버스 크기, TC-18 15회 반복 후 동일,
+  키보드 슬라이더, 초기화 복원, 효과 4종 서로 다름, 스탬프 켜기/끄기, 이상한 날짜 안내, 콘솔 에러 없음
 browser render check: PASS — preview 캔버스와 별도 export 캔버스 픽셀 diff 0,
   효과 4종 / 스탬프 / 3 화면비 스크린샷 육안 확인, 낮은 화면·모바일에서 미리보기 비율 유지
 browser upload flow: PASS (headless Chromium, production build, 13 시나리오)
@@ -243,9 +246,8 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- 화면비 선택 UI (1:1 / 4:5 / 9:16)
-- 사진 조절 UI (확대, 좌우, 위아래, 회전, 초기화) + 사진 효과 / 날짜 스탬프 켜기
-- 이후: 문구 렌더링(Galmuri 폰트 self-host, 줄바꿈·overflow 정책), PNG/JPEG 다운로드
+- 문구 입력 UI + 렌더링: Galmuri 폰트 self-host(`galmuri` npm, OFL), 줄바꿈·overflow 정책(TC-11~16)
+- 그다음: PNG/JPEG 다운로드 (같은 renderCard 사용)
 
 ### Verification
 
