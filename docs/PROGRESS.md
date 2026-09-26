@@ -50,7 +50,7 @@ Core editor 구현 (화면비·사진 조절 UI 완료 → 문구 렌더링부�
 8. ~~이미지 위치/크기 조절 구현~~ (완료, 슬라이더. 미리보기 드래그는 미구현)
 9. 텍스트 입력 구현
 10. 레트로 미니홈피 테마 구현
-11. 스티커 구현 — 데이터·렌더러 완료, 추가/선택/드래그 UI 남음
+11. 스티커 구현 — 원본 에셋·렌더러 완료, 추가/선택/드래그 UI 남음
 12. PNG/JPEG 다운로드 구현
 13. 사용자 템플릿 CRUD 구현
 14. browser persistence 구현
@@ -189,12 +189,12 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
   - `minihome` → **미니홈피**: 바인더, 왼쪽 프로필 칸(TODAY is.. 기분·소개글·닉네임), BGM 박스, 인덱스 탭 (4:5 시안)
   - `album` → **사진첩 게시물**: [사진첩] 제목, 날짜·시각, 퍼가기/댓글 줄 (9:16 시안)
   - `diary` → 다이어리 (시안 미작성)
-- 스티커 (v6, 2026-09-26 재개, 사용자 "스티커 참고용" 시안 기반): **파스텔 도트(픽셀) 아트**
-  - 8종 `heart star sparkle bow flower moon cherry wingheart` × 4색 `pink blue lavender silver` (`sticker.tint`)
-  - `src/render/pixelStickers.ts`의 문자 격자가 단일 출처. 시안 `Sticker.dc.html`은 같은 격자에서 생성
-  - 외곽선(빈 칸과 닿는 칸) / 그림자(아래·오른쪽) / 밝은면(위·왼쪽) / 도트 결 / 흰 칼선 1칸 + 반투명 번짐 1칸을 격자에서 자동 계산
-  - 렌더: 1칸=1px 스프라이트 → `imageSmoothingEnabled=false`로 확대·회전 (Preview와 Export 동일)
-  - UI(스티커 추가·색 선택·드래그)는 아직 미구현
+- 스티커 (v7, 확정): **사용자 "스티커 참고용" 시안 이미지의 원본을 그대로 잘라 쓴다.** 새로 그리지 않는다.
+  - 원본 webp(투명 배경)를 알파 기준 연결요소로 분리 → 32종 PNG (`public/stickers/<id>.png`, 약 0.9MB)
+  - `src/editor/stickerAssets.ts` = manifest(id, 한글 이름, 원본 크기). `sticker.kind` = 에셋 id. 색(tint) 개념 없음
+  - 렌더: 원본 이미지를 `imageSmoothingEnabled=false`로 확대·회전 (도트 유지). `useStickerImages`가 카드에 쓰인 종류만 로드
+  - 시안 `Sticker.dc.html`도 같은 PNG를 에셋으로 올려 사용
+  - 추가/선택/드래그 UI는 아직 미구현
 - 특수문자 감성: 카드 문구에 `˚ ｡ · * ･ﾟ ｡ﾟ`를 섞는다. Galmuri11 지원 여부를 확인함
   (지원: ˚ ° · * ｡ ･ ﾟ ♡ ♥ ★ ☆ ♬ ♪ … ㆀ ⊙ ▶ 『 』 ─ ※ / 미지원: ✽ ❀ ✿ ∘ ✦ ✧ ⁺ ₊ ⋆).
   미지원 기호는 특수문자 버튼에 넣지 않는다.
@@ -214,6 +214,8 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ## Known Issues
 
+- **스티커 이미지 출처·라이선스 확인 필요**: `public/stickers/`는 사용자가 제공한 참고 이미지에서 잘라낸 것이다.
+  공개 배포 전에 원 저작자·이용 조건을 확인해야 한다.
 - 업로드 이미지를 data URL로 저장하므로 localStorage 용량(약 5MB)을 넘을 수 있다.
   업로드 단계에서 최대 변 길이로 축소·재인코딩하고, 템플릿 저장은 IndexedDB 사용을 검토한다.
 - Galmuri 웹폰트를 Canvas export에 쓰려면 `document.fonts.load` 완료 후 렌더링해야 한다. 픽셀 폰트는 export 배율(프리뷰 540 → 1080)에서 정수배 크기를 유지해야 선명하다.
