@@ -200,3 +200,10 @@ input:disabled + .retro-button,
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+.retro-button-primary {
+  color: #fff;
+  background: #2f7fa8;
+  border-color: #1d5874;
+  box-shadow: inset 1px 1px 0 #6fb0d0;
+}

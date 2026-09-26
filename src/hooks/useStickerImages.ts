@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { stickerAssetUrl } from '../editor/stickerAssets'
 import type { Sticker, StickerKind } from '../editor/types'
+import { loadSticker } from '../render/loadImages'
 import type { LoadedImage } from '../render/renderCard'
 
 /**
  * 카드에 붙은 스티커 종류의 이미지를 불러온다. 한 번 불러온 이미지는 재사용한다.
- * Preview와 Export가 같은 Map을 쓰도록 App에서 한 번만 호출한다.
+ * Preview와 Export가 같은 로더(loadSticker)를 쓴다.
  */
 export function useStickerImages(stickers: readonly Sticker[]): ReadonlyMap<StickerKind, LoadedImage> {
   const [images, setImages] = useState<ReadonlyMap<StickerKind, LoadedImage>>(() => new Map())
@@ -15,22 +15,11 @@ export function useStickerImages(stickers: readonly Sticker[]): ReadonlyMap<Stic
     const missing = wanted === '' ? [] : (wanted.split(',') as StickerKind[]).filter((k) => !images.has(k))
     if (missing.length === 0) return
     let cancelled = false
-    Promise.all(
-      missing.map(async (kind) => {
-        const image = new Image()
-        image.src = stickerAssetUrl(kind)
-        try {
-          await image.decode()
-          return [kind, { image, width: image.naturalWidth, height: image.naturalHeight }] as const
-        } catch {
-          return null
-        }
-      }),
-    ).then((loaded) => {
+    Promise.all(missing.map(async (kind) => [kind, await loadSticker(kind)] as const)).then((loaded) => {
       if (cancelled) return
       setImages((prev) => {
         const next = new Map(prev)
-        for (const entry of loaded) if (entry) next.set(entry[0], entry[1])
+        for (const [kind, image] of loaded) if (image) next.set(kind, image)
         return next
       })
     })

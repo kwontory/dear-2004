@@ -2,6 +2,7 @@ import { useMemo, useReducer } from 'react'
 import './App.css'
 import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
+import { ExportButtons } from './components/ExportButtons'
 import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
 import { TextControls } from './components/TextControls'
@@ -74,6 +75,7 @@ function App() {
         <section className="panel panel-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading" className="panel-title">미리보기</h2>
           <CardPreview state={state} assets={assets} />
+          <ExportButtons state={state} />
           {fonts === 'failed' && (
             <p role="status" className="control-hint font-warning">
               ※ 픽셀 글꼴을 불러오지 못해 기본 글꼴로 보여요. 새로고침하면 다시 시도해요.
