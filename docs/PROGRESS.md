@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-핵심 기능·디자인 적용 완료 → 배포 준비 (폰트 용량, 스티커 라이선스 확인, 공개 배포)
+핵심 기능·디자인 적용 완료. 배포는 보류(사용자 결정, 2026-09-26). 남은 것: 실제 기기 확인
 
 
 ## Completed
@@ -35,6 +35,8 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 - [x] JSON 내보내기/불러오기 UI (TC-23~27)
 - [x] 카드 틀 4종(감성 사진·미니홈피·사진첩·다이어리) + 스킨 4종 renderer
 - [x] 편집기 바인더 디자인 + 인덱스 탭(사진/문구/꾸미기/템플릿) + 모바일 배치
+- [x] 폰트 용량 축소: 1.1MB → 첫 로딩 약 194KB (core/rare 분할, 드문 한글은 필요할 때만)
+- [x] 브라우저 E2E를 저장소에 추가 (`e2e/`, `npm run test:e2e`, 9 스위트 123 시나리오)
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
@@ -143,6 +145,25 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 문자열·배열이 상한 초과 → 거부
 - 유한 숫자의 범위 초과 → reducer와 같은 clamp 함수로 보정
 - 알 수 없는 추가 필드 → 제거
+
+
+### 20. 에셋 출처
+
+- 스티커 `public/stickers/*.png`: **사용자가 AI로 직접 생성한 이미지**(참고 시안 "스티커 참고용")에서 잘라냄 — 사용자 소유
+- 폰트 Galmuri: SIL OFL 1.1 (`public/fonts/Galmuri-OFL.md`, 원본 `fonts-src/`)
+
+
+### 19. 폰트 분할과 E2E
+
+- `npm run fonts:subset` (`scripts/subset-fonts.mjs`, dev deps: subset-font, fontkit)
+  - 남김: 라틴, 기호(U+2000–2BFF), CJK 기호, 한글 호환 자모, 괄호 문자, 반각/전각, 한글 음절 11,172자
+  - 뺌: 한자, 가나, 그리스/키릴
+  - core = 기호 + KS X 1001 한글 2,350자 / rare = 나머지 8,822자, unicode-range가 겹치지 않음
+  - 결과: Galmuri11 74KB+127KB, Bold 54KB+107KB, Galmuri9 66KB+122KB. 범위 표 `src/render/fontRanges.generated.ts`
+- `registerFontFaces()`(main.tsx)가 6조각을 등록만 하고, UI는 브라우저가 필요한 조각만 받는다
+- 카드: `loadCardFonts(cardText(state))` = `document.fonts.load(font, 카드에 들어갈 모든 글자)` → 드문 한글이면 rare 조각까지 받은 뒤 그린다.
+  미리보기는 `useCardFonts`의 version이 바뀌면 다시 그림. 다운로드는 항상 기다린다 (E2E: 드문 한글 PNG == 미리보기)
+- E2E: `e2e/*.e2e.mjs` + `e2e/run.mjs`, playwright-core ~1.63 (Chromium headless shell 1243). `E2E_BROWSER=webkit` 지원
 
 
 ### 18. 카드 틀과 스킨
@@ -279,11 +300,11 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ## Known Issues
 
-- 폰트 3종 합계 약 1.1MB. 모바일 첫 로딩이 느릴 수 있다 → 배포 전 한글 서브셋 또는 지연 로딩 검토
+- 폰트에서 한자·가나·그리스/키릴 문자를 뺐다. 사용자가 이런 글자를 쓰면 기본 글꼴(monospace)로 보여 기기마다 달라질 수 있다
+- 실제 기기(iOS Safari, Samsung Internet, Android Chrome) 확인은 아직 못 했다. 이 환경에서는 WebKit 실행에 시스템 라이브러리(GTK4 등, sudo 필요)가 없어 Safari 엔진 테스트도 못 돌렸다
+- 스티커 끌기 E2E의 모바일 터치 부분은 Chromium CDP를 쓰므로 WebKit으로 돌리면 실패한다
 - 기기가 웹폰트까지 강제로 바꾸는 경우(일부 제조사 WebView 설정)는 FontFace 로드 자체가 무력화될 수 있어 막을 수 없다.
   그 경우에도 줄바꿈은 실제 측정값으로 계산되므로 글자가 칸 밖으로 넘치지는 않는다
-- **스티커 이미지 출처·라이선스 확인 필요**: `public/stickers/`는 사용자가 제공한 참고 이미지에서 잘라낸 것이다.
-  공개 배포 전에 원 저작자·이용 조건을 확인해야 한다.
 - 업로드 이미지를 data URL로 저장하므로 localStorage 용량(약 5MB)을 넘을 수 있다.
   업로드 단계에서 최대 변 길이로 축소·재인코딩하고, 템플릿 저장은 IndexedDB 사용을 검토한다.
 - Galmuri 웹폰트를 Canvas export에 쓰려면 `document.fonts.load` 완료 후 렌더링해야 한다. 픽셀 폰트는 export 배율(프리뷰 540 → 1080)에서 정수배 크기를 유지해야 선명하다.
@@ -293,6 +314,7 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
+browser E2E (repo): `npm run test:e2e` → 123 passed, 0 failed (9 suites, Chromium)
 automated tests: PASS (167 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
 browser JSON flow: PASS (9 시나리오) — TC-23 내보내기, TC-24 왕복 후 같은 카드, TC-25 문법 오류, TC-26 다른 형식,
   TC-27 미지원 버전, 잘못된 화면비·Infinity·SVG 데이터 거부 + 모두 기존 상태 유지
@@ -331,10 +353,10 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- 배포 전 확인: 스티커 이미지 출처·라이선스(사용자 확인 필요), 폰트 용량(약 1.1MB) 줄이기 검토
-- 실제 기기 확인: iOS Safari(입력칸 확대, 다운로드), Samsung Internet(사용자 글꼴), Android Chrome
-- 공개 배포 (정적 호스팅: Vercel / Netlify / GitHub Pages 중 선택)
-- 브라우저 E2E 스크립트를 저장소에 둘지 결정 (playwright-core devDependency 필요)
+- 실제 기기 확인 (사용자): iOS Safari·Samsung Internet·Android Chrome 확인
+  - 확인 포인트: 입력칸 포커스 시 화면 확대 없음, 스티커 끌기 중 스크롤 없음, PNG/JPEG 저장, 템플릿 새로고침 유지, 사용자 글꼴 설정
+- WebKit E2E: `sudo npx playwright-core install-deps webkit` 후 `E2E_BROWSER=webkit npm run test:e2e`
+- 공개 배포: 보류 (사용자가 원할 때 진행)
 
 ### Verification
 
