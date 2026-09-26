@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (EditorState 완료 → 이미지 업로드부터)
+Core editor 구현 (이미지 업로드 완료 → Canvas renderer부터)
 
 
 ## Completed
@@ -24,6 +24,7 @@ Core editor 구현 (EditorState 완료 → 이미지 업로드부터)
 - [x] EditorState 검증 (`validateEditorState`, `parseEditorStateJson`) — JSON import / 템플릿 로드에서 재사용
 - [x] `editorReducer` — 모든 상태 변경 경로, clamp 로직 공유
 - [x] EditorState 확장: 사진 효과, 날짜 스탬프, 편집 가능한 댓글, 특수문자 삽입 헬퍼
+- [x] 이미지 업로드 + 파일 검증 (`src/upload/`, `src/components/PhotoUpload.tsx`), App에 `useReducer(editorReducer)` 연결
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
 
@@ -39,8 +40,8 @@ Core editor 구현 (EditorState 완료 → 이미지 업로드부터)
 1. ~~프로젝트 초기화~~ (완료)
 2. ~~기본 페이지 레이아웃 구성~~ (뼈대 완료, 실제 컨트롤은 기능별로 추가)
 3. ~~EditorState 타입 정의~~ (완료, reducer·검증 포함)
-4. 이미지 업로드 구현 — `useReducer(editorReducer)`를 App에 연결하면서 시작
-5. PNG/JPEG 파일 검증 구현
+4. ~~이미지 업로드 구현~~ (완료)
+5. ~~PNG/JPEG 파일 검증 구현~~ (완료)
 6. Canvas renderer 구현
 7. 1:1 / 4:5 / 9:16 화면비 구현
 8. 이미지 위치/크기 조절 구현
@@ -133,6 +134,18 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 알 수 없는 추가 필드 → 제거
 
 
+### 12. 업로드 정책
+
+`src/upload/` 참고. 순서: 신고된 MIME → 용량 → 매직 바이트 → 헤더 해상도 → 실제 디코드 → 축소·재인코딩.
+
+- 허용: PNG, JPEG만. 신고 MIME이 비어 있으면 매직 바이트로 판단, 신고와 실제가 달라도 실제가 PNG/JPEG면 실제 형식 사용
+- 용량 ≤ 10MB, 가로·세로 ≤ 8192px, 픽셀 수 ≤ 40MP — **디코딩 전에 헤더(PNG IHDR / JPEG SOF)에서 확인**해 브라우저 멈춤 방지
+- 디코드: `createImageBitmap` 실패 시 거부 (깨진 파일, 헤더만 있는 가짜)
+- 저장: 긴 변 2048px로 축소. PNG는 PNG(투명도 유지), JPEG는 JPEG 0.9
+- 실패 시 기존 사진·편집 상태 유지, `role="alert"` 문구에 "※ 앗!" 텍스트 포함 (색만으로 전달하지 않음)
+- 에러 문구에 파일 이름 등 사용자 입력을 넣지 않는다
+
+
 ### 11. Design (v2 — 그시절 감성 리디자인)
 
 디자인 시안: (비공개 디자인 캔버스)
@@ -184,10 +197,16 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (55 tests — EditorState 검증 / reducer / text)
-manual core flow: NOT RUN (UI 기능 미구현)
-edge cases: 모델 단위만 PASS (TC-12, 14~18, 24~27 해당 부분)
+automated tests: PASS (77 tests — EditorState 검증 / reducer / text / upload 검증)
+browser upload flow: PASS (headless Chromium, production build, 13 시나리오)
+  TC-01 PNG, TC-02 JPEG(2048 축소), TC-03 PDF(기존 사진 유지), TC-04 GIF, SVG, TC-05 가짜 확장자,
+  TC-06 초대형 해상도(디코딩 전 거부), 깨진 PNG, TC-07 1x1, TC-08 초가로형, TC-09 초세로형,
+  TC-10 투명 PNG(PNG 유지), 콘솔 에러 없음
+manual core flow: 미리보기·다운로드 미구현으로 NOT RUN
 ```
+
+브라우저 테스트는 저장소 밖 임시 스크립트(playwright-core + 캐시된 chromium-headless-shell)로 실행했다.
+dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E를 저장소에 둘지는 renderer 이후 결정한다.
 
 
 ## Last Session Summary (2026-09-26)
@@ -200,8 +219,8 @@ edge cases: 모델 단위만 PASS (TC-12, 14~18, 24~27 해당 부분)
 
 ### Next action
 
-- App에 `useReducer(editorReducer, createDefaultEditorState())` 연결
-- 이미지 업로드 + 파일 검증 (MIME, 크기, decode, 최대 해상도 축소)
+- Canvas renderer (`renderCard(ctx, state, size)`) — Preview와 Export가 같은 함수를 쓰게 한다
+- 먼저 사진 영역 cover 배치 + transform(offset/scale/rotation) + 사진 효과 + 날짜 스탬프부터
 
 ### Verification
 
