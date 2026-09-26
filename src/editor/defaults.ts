@@ -30,8 +30,8 @@ export function createDefaultEditorState(): EditorState {
       total: 2004,
     },
     theme: {
-      background: 'sky-dots',
-      frame: 'minihome',
+      background: 'pastel-gradient',
+      frame: 'memo',
     },
     stickers: [],
     comments: [],

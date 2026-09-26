@@ -1,5 +1,5 @@
 import type { AspectRatio, EditorState } from '../editor/types'
-import { computeLayout } from '../render/layout'
+import { cardSize } from '../render/layout'
 import { loadCardAssets } from '../render/loadImages'
 import { renderCard } from '../render/renderCard'
 
@@ -33,7 +33,7 @@ export class ExportError extends Error {}
  */
 export async function renderCardToCanvas(state: EditorState, format: ExportFormat): Promise<HTMLCanvasElement> {
   const assets = await loadCardAssets(state)
-  const { width, height } = computeLayout(state.aspectRatio, state.theme.frame)
+  const { width, height } = cardSize(state.aspectRatio)
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height

@@ -1,8 +1,9 @@
 import type { EditorState, StickerKind } from '../editor/types'
 import { drawDateStamp, formatStampText } from './dateStamp'
 import { cardFont } from './fonts'
-import { wrapText } from './textLayout'
+import { drawFrameBase, drawFrameOverlay, drawFrameText } from './frames'
 import { computeLayout, type CardLayout, type Rect } from './layout'
+import { drawSkin } from './skins'
 import { applyColorEffect, EFFECT_PARAMS } from './photoEffects'
 import { computePhotoPlacement } from './photoPlacement'
 
@@ -38,18 +39,14 @@ const defaultCanvasFactory: CanvasFactory = (width, height) => {
 }
 
 const COLORS = {
-  memoBackground: '#ffffff',
-  bodyText: '#6b6b6b',
-  signatureText: '#8a8a8a',
   placeholderTop: '#b9c8d8',
   placeholderMiddle: '#d9d3d6',
   placeholderBottom: '#efe4da',
   placeholderText: '#7d8794',
 } as const
 
-/** 스탬프 숫자 높이 = 카드 너비의 2.4% (1080px에서 약 26px), 사진 모서리에서 떨어진 거리 */
-const STAMP_DIGIT_HEIGHT_RATIO = 0.024
-const STAMP_MARGIN_RATIO = { right: 0.022, bottom: 0.016 } as const
+/** 스탬프를 사진 모서리에서 떨어뜨리는 거리 (숫자 높이 대비) */
+const STAMP_MARGIN = { right: 0.9, bottom: 0.6 } as const
 
 function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect, drawLabel: boolean): void {
   const gradient = ctx.createLinearGradient(area.x, area.y, area.x + area.width * 0.4, area.y + area.height)
@@ -61,7 +58,7 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect, drawLabel: b
 
   if (!drawLabel) return
   ctx.fillStyle = COLORS.placeholderText
-  ctx.font = cardFont(24)
+  ctx.font = cardFont(Math.min(24, Math.max(12, Math.round(area.width / 480) * 12)))
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('[내 사진]', area.x + area.width / 2, area.y + area.height / 2)
@@ -71,7 +68,8 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect, drawLabel: b
  * 효과까지 입힌 사진 레이어 캐시. 스티커를 끌거나 글자를 칠 때마다 사진 효과(픽셀 계산)를
  * 다시 하지 않도록, 같은 이미지·배치·효과·크기면 이전 결과를 재사용한다. 결과는 항상 같다.
  */
-const photoLayerCache = new WeakMap<object, { key: string; layer: HTMLCanvasElement }>()
+const PHOTO_CACHE_PER_IMAGE = 4
+const photoLayerCache = new WeakMap<object, Map<string, HTMLCanvasElement>>()
 
 function cachedPhotoLayer(
   photo: LoadedPhoto,
@@ -79,11 +77,18 @@ function cachedPhotoLayer(
   area: Rect,
   createCanvas: CanvasFactory,
 ): HTMLCanvasElement {
-  const key = JSON.stringify([state.photo.transform, state.photo.effect, area.width, area.height])
-  const cached = photoLayerCache.get(photo.image)
-  if (cached && cached.key === key) return cached.layer
+  const key = JSON.stringify([state.photo.transform, state.photo.effect, Math.round(area.width), Math.round(area.height)])
+  let entries = photoLayerCache.get(photo.image)
+  if (!entries) {
+    entries = new Map()
+    photoLayerCache.set(photo.image, entries)
+  }
+  const hit = entries.get(key)
+  if (hit) return hit
   const layer = renderPhotoLayer(photo, state, area, createCanvas)
-  photoLayerCache.set(photo.image, { key, layer })
+  entries.set(key, layer)
+  // 오래된 것부터 버린다 (Map은 넣은 순서를 기억한다)
+  while (entries.size > PHOTO_CACHE_PER_IMAGE) entries.delete(entries.keys().next().value!)
   return layer
 }
 
@@ -136,33 +141,6 @@ function renderPhotoLayer(
   return layer
 }
 
-/** 감성 문구 본문과 서명. 줄바꿈은 실제 폰트의 measureText로 계산한다 */
-function drawMemoText(ctx: CanvasRenderingContext2D, state: EditorState, layout: CardLayout): void {
-  const measure = (text: string) => ctx.measureText(text).width
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'top'
-
-  const body = layout.body
-  if (state.text.body.trim() !== '') {
-    ctx.font = cardFont(body.fontSize)
-    ctx.fillStyle = COLORS.bodyText
-    const { lines } = wrapText(state.text.body, body.width, body.maxLines, measure)
-    // 픽셀 폰트가 번지지 않도록 정수 좌표에 찍는다
-    lines.forEach((line, i) => ctx.fillText(line, body.x, Math.round(body.y + i * body.lineHeight)))
-  }
-
-  const signature = state.text.signature.trim()
-  if (signature !== '') {
-    const sig = layout.signature
-    ctx.font = cardFont(sig.fontSize)
-    ctx.fillStyle = COLORS.signatureText
-    ctx.textAlign = 'right'
-    ctx.textBaseline = 'bottom'
-    const [line] = wrapText(`by. ${signature}`, sig.maxWidth, 1, measure).lines
-    ctx.fillText(line ?? '', sig.right, sig.bottom)
-  }
-}
-
 /**
  * 스티커: 원본 도트 이미지를 smoothing 없이 확대해 픽셀 경계를 유지한다.
  * size = 카드 너비 대비 스티커 너비, (x, y) = 카드 대비 중심 좌표.
@@ -188,9 +166,42 @@ function drawStickers(
   }
 }
 
+/** 사진(또는 자리 표시)을 영역에 그린다. rotation이 있으면 영역 중심을 기준으로 돌린다 */
+function drawPhotoArea(
+  ctx: CanvasRenderingContext2D,
+  state: EditorState,
+  assets: CardAssets,
+  area: Rect,
+  rotation: number,
+  createCanvas: CanvasFactory,
+  stamp: { text: string; height: number } | null,
+): void {
+  ctx.save()
+  ctx.translate(area.x + area.width / 2, area.y + area.height / 2)
+  ctx.rotate(rotation)
+  const local = { x: -area.width / 2, y: -area.height / 2, width: area.width, height: area.height }
+  if (assets.photo) {
+    ctx.drawImage(cachedPhotoLayer(assets.photo, state, area, createCanvas), local.x, local.y, area.width, area.height)
+  } else {
+    drawPlaceholder(ctx, local, assets.fonts !== 'loading')
+  }
+  if (stamp) {
+    drawDateStamp(
+      ctx,
+      stamp.text,
+      local.x + local.width - stamp.height * STAMP_MARGIN.right,
+      local.y + local.height - stamp.height * STAMP_MARGIN.bottom,
+      stamp.height,
+    )
+  }
+  ctx.restore()
+}
+
 /**
  * 카드 한 장을 그린다. Preview와 Export가 모두 이 함수를 쓴다.
- * ctx의 캔버스는 computeLayout()이 돌려주는 export 크기와 같아야 한다.
+ * ctx의 캔버스는 cardSize(state.aspectRatio)와 같은 크기여야 한다.
+ *
+ * 순서: 배경(스킨) → 틀 장식 → 사진·날짜 스탬프 → 틀 위 장식(테이프) → 글자 → 스티커
  */
 export function renderCard(
   ctx: CanvasRenderingContext2D,
@@ -198,36 +209,25 @@ export function renderCard(
   assets: CardAssets,
   createCanvas: CanvasFactory = defaultCanvasFactory,
 ): void {
-  const { photo } = assets
-  const layout = computeLayout(state.aspectRatio, state.theme.frame)
-  const area = layout.photo
+  const layout: CardLayout = computeLayout(state)
 
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
   // JPEG export에서도 투명 영역이 검게 나오지 않도록 항상 배경을 먼저 칠한다
-  ctx.fillStyle = COLORS.memoBackground
-  ctx.fillRect(0, 0, layout.width, layout.height)
-
-  if (photo) {
-    ctx.drawImage(cachedPhotoLayer(photo, state, area, createCanvas), area.x, area.y)
-  } else {
-    drawPlaceholder(ctx, area, assets.fonts !== 'loading')
-  }
+  drawSkin(ctx, state.theme.background, layout.width, layout.height)
+  drawFrameBase(ctx, state, layout)
 
   const stampText = state.photo.showDateStamp ? formatStampText(state.text.date) : null
-  if (stampText) {
-    drawDateStamp(
-      ctx,
-      stampText,
-      area.x + area.width - layout.width * STAMP_MARGIN_RATIO.right,
-      area.y + area.height - layout.width * STAMP_MARGIN_RATIO.bottom,
-      layout.width * STAMP_DIGIT_HEIGHT_RATIO,
-    )
+  const rotation = layout.frame === 'diary' ? layout.photoRotation : 0
+  drawPhotoArea(ctx, state, assets, layout.photo, rotation, createCanvas, stampText ? { text: stampText, height: layout.stampHeight } : null)
+  if (layout.frame === 'minihome') {
+    drawPhotoArea(ctx, state, assets, layout.profilePhoto, 0, createCanvas, null)
   }
 
-  if (assets.fonts !== 'loading') drawMemoText(ctx, state, layout)
+  drawFrameOverlay(ctx, layout)
+  if (assets.fonts !== 'loading') drawFrameText(ctx, state, layout)
   drawStickers(ctx, state, layout, assets.stickers)
   ctx.restore()
 }

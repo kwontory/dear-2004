@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import { hitTestStickers, stickerBox } from '../editor/stickerGeometry'
 import type { EditorState } from '../editor/types'
-import { computeLayout } from '../render/layout'
+import { cardSize } from '../render/layout'
 import { renderCard, type CardAssets } from '../render/renderCard'
 import './CardPreview.css'
 
@@ -39,7 +39,7 @@ export function CardPreview({ state, assets, selectedStickerId, onSelectSticker,
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
-  const { width, height } = computeLayout(state.aspectRatio, state.theme.frame)
+  const { width, height } = cardSize(state.aspectRatio)
 
   // 이벤트 핸들러가 항상 최신 스티커 목록을 보도록
   const stickersRef = useRef(state.stickers)

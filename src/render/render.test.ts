@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { ASPECT_RATIOS, CANVAS_SIZES, FRAME_IDS, PHOTO_LIMITS } from '../editor/constants'
+import { ASPECT_RATIOS, CANVAS_SIZES, COMMENT_LIMITS, FRAME_IDS, PHOTO_LIMITS } from '../editor/constants'
+import { createDefaultEditorState } from '../editor/defaults'
 import { buildStampPolygons, formatStampText, STAMP_GEOMETRY, stampWidth } from './dateStamp'
 import { computeLayout } from './layout'
 import { applyColorEffect } from './photoEffects'
@@ -8,13 +9,40 @@ import { computePhotoPlacement } from './photoPlacement'
 const identity = { offsetX: 0, offsetY: 0, scale: 1, rotation: 0 }
 
 describe('computeLayout', () => {
-  it.each(ASPECT_RATIOS)('%s: export 크기와 같고 사진 영역이 카드 안에 있다', (ratio) => {
-    for (const frame of FRAME_IDS) {
-      const layout = computeLayout(ratio, frame)
-      expect(layout).toMatchObject(CANVAS_SIZES[ratio])
-      expect(layout.photo.x).toBeGreaterThanOrEqual(0)
-      expect(layout.photo.y + layout.photo.height).toBeLessThanOrEqual(layout.height)
-      expect(Number.isInteger(layout.photo.height)).toBe(true)
+  const inside = (r: { x: number; y: number; width: number; height: number }, w: number, h: number) =>
+    r.x >= 0 && r.y >= 0 && r.width > 0 && r.height > 0 && r.x + r.width <= w + 0.5 && r.y + r.height <= h + 0.5
+
+  const variants = ASPECT_RATIOS.flatMap((ratio) =>
+    FRAME_IDS.flatMap((frame) => [false, true].map((busy) => [ratio, frame, busy] as const)),
+  )
+
+  it.each(variants)('%s / %s / 댓글·서명 많음=%s: 영역이 카드 안에 있다', (ratio, frame, busy) => {
+    const state = createDefaultEditorState()
+    state.aspectRatio = ratio
+    state.theme.frame = frame
+    if (busy) {
+      state.text.signature = '★나야나★'
+      state.text.bgm = '노래'
+      state.comments = Array.from({ length: COMMENT_LIMITS.maxCount }, (_, i) => ({ id: `c${i}`, author: 'a', text: 'b' }))
+    }
+    const layout = computeLayout(state)
+    expect(layout).toMatchObject(CANVAS_SIZES[ratio])
+    expect(layout.frame).toBe(frame)
+    expect(inside(layout.photo, layout.width, layout.height)).toBe(true)
+    expect(layout.stampHeight).toBeGreaterThanOrEqual(14)
+    expect(layout.stampHeight).toBeLessThanOrEqual(26)
+    if (layout.frame === 'minihome') {
+      expect(inside(layout.profilePhoto, layout.width, layout.height)).toBe(true)
+      expect(layout.profileText.maxLines).toBeGreaterThanOrEqual(0)
+      // 사진이 댓글 줄과 겹치지 않는다
+      expect(layout.photoBox.y + layout.photoBox.height).toBeLessThanOrEqual(layout.comments.y)
+    }
+    if (layout.frame === 'album') {
+      expect(layout.photoBox.y + layout.photoBox.height).toBeLessThanOrEqual(layout.body.y)
+      expect(layout.body.y + layout.body.height).toBeLessThanOrEqual(layout.footer.lineY)
+    }
+    if (layout.frame === 'memo' || layout.frame === 'diary') {
+      expect(layout.body.maxLines).toBeGreaterThanOrEqual(1)
     }
   })
 })

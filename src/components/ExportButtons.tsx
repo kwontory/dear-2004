@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { EditorState } from '../editor/types'
 import { exportCard, type ExportFormat } from '../export/exportCard'
-import { computeLayout } from '../render/layout'
+import { cardSize } from '../render/layout'
 import './ExportButtons.css'
 
 interface ExportButtonsProps {
@@ -12,7 +12,7 @@ type Status = { kind: 'idle' } | { kind: 'busy'; format: ExportFormat } | { kind
 
 export function ExportButtons({ state }: ExportButtonsProps) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
-  const { width, height } = computeLayout(state.aspectRatio, state.theme.frame)
+  const { width, height } = cardSize(state.aspectRatio)
   const busy = status.kind === 'busy'
 
   async function handleExport(format: ExportFormat) {
