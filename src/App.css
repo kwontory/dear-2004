@@ -52,6 +52,14 @@
   color: var(--color-text-muted);
 }
 
+/* 넓은 화면: 편집 도구를 내려도 미리보기가 따라온다 */
+@media (min-width: 721px) {
+  .panel-preview {
+    position: sticky;
+    top: var(--space-3);
+  }
+}
+
 /* 좁은 화면: 미리보기를 위로, 편집 도구를 아래로 */
 @media (max-width: 720px) {
   .app-main {

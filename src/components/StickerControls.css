@@ -1,0 +1,67 @@
+.sticker-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+}
+
+.sticker-button {
+  aspect-ratio: 1;
+  min-height: 44px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f7f7;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.sticker-button img,
+.selected-sticker-head img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.sticker-button:hover {
+  background: #eef6fb;
+}
+
+.sticker-button:focus-visible {
+  outline: 2px solid #2f7fa8;
+  outline-offset: 1px;
+}
+
+.sticker-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.selected-sticker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed #2f7fa8;
+  background: #f5f9fc;
+}
+
+.selected-sticker-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.selected-sticker-head img {
+  width: 36px;
+  height: 36px;
+}
+
+.selected-sticker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

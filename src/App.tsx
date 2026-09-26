@@ -1,16 +1,24 @@
-import { useMemo, useReducer } from 'react'
+import { useMemo, useReducer, useState } from 'react'
 import './App.css'
 import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
 import { ExportButtons } from './components/ExportButtons'
 import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
+import { SelectedStickerControls, StickerPicker } from './components/StickerControls'
 import { TextControls } from './components/TextControls'
+import { STICKER_LIMITS } from './editor/constants'
+import type { StickerKind } from './editor/types'
 import { createDefaultEditorState } from './editor/defaults'
 import { editorReducer } from './editor/reducer'
 import { useCardFonts } from './hooks/useCardFonts'
 import { useLoadedPhoto } from './hooks/useLoadedPhoto'
 import { useStickerImages } from './hooks/useStickerImages'
+
+const STICKER_SPREAD = 5
+const STICKER_SPREAD_OFFSET = 0.04
+let stickerSeq = 0
+const newStickerId = () => `s${Date.now().toString(36)}${(stickerSeq++).toString(36)}`
 
 function App() {
   const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
@@ -18,6 +26,16 @@ function App() {
   const stickerImages = useStickerImages(state.stickers)
   const fonts = useCardFonts()
   const assets = useMemo(() => ({ photo, stickers: stickerImages, fonts }), [photo, stickerImages, fonts])
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null)
+  const selectedSticker = state.stickers.find((s) => s.id === selectedStickerId) ?? null
+
+  function addSticker(kind: StickerKind) {
+    const id = newStickerId()
+    // 연달아 붙여도 완전히 겹치지 않도록 조금씩 비껴 놓는다
+    const step = (state.stickers.length % STICKER_SPREAD) * STICKER_SPREAD_OFFSET
+    dispatch({ type: 'addSticker', id, kind, x: 0.5 + step, y: 0.5 + step })
+    setSelectedStickerId(id)
+  }
 
   return (
     <div className="app">
@@ -66,6 +84,21 @@ function App() {
             <PhotoEffectSelector photo={state.photo} date={state.text.date} dispatch={dispatch} />
           </section>
 
+          <section className="control-section" aria-labelledby="sticker-heading">
+            <h3 id="sticker-heading" className="control-section-title">
+              ■ 스티커 <span className="control-hint">({state.stickers.length}/{STICKER_LIMITS.maxCount})</span>
+            </h3>
+            {selectedSticker && (
+              <SelectedStickerControls
+                sticker={selectedSticker}
+                dispatch={dispatch}
+                onDeselect={() => setSelectedStickerId(null)}
+              />
+            )}
+            <StickerPicker onAdd={addSticker} disabled={state.stickers.length >= STICKER_LIMITS.maxCount} />
+            <p className="control-hint">미리보기에서 스티커를 끌어서 옮길 수 있어요 ^^</p>
+          </section>
+
           <section className="control-section" aria-labelledby="text-heading">
             <h3 id="text-heading" className="control-section-title">■ 문구 쓰기</h3>
             <TextControls state={state} dispatch={dispatch} />
@@ -74,7 +107,13 @@ function App() {
 
         <section className="panel panel-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading" className="panel-title">미리보기</h2>
-          <CardPreview state={state} assets={assets} />
+          <CardPreview
+            state={state}
+            assets={assets}
+            selectedStickerId={selectedSticker?.id ?? null}
+            onSelectSticker={setSelectedStickerId}
+            onMoveSticker={(id, x, y) => dispatch({ type: 'updateSticker', id, patch: { x, y } })}
+          />
           <ExportButtons state={state} />
           {fonts === 'failed' && (
             <p role="status" className="control-hint font-warning">

@@ -86,6 +86,17 @@ describe('editorReducer', () => {
     expectValid(state)
   })
 
+  it('스티커 맨 앞으로 / 위치 지정 추가', () => {
+    const state = run([
+      { type: 'addSticker', id: 'a', kind: 'heart-pink', x: 0.2, y: 2 },
+      { type: 'addSticker', id: 'b', kind: 'star-pink' },
+      { type: 'bringStickerToFront', id: 'a' },
+      { type: 'bringStickerToFront', id: 'nope' },
+    ])
+    expect(state.stickers.map((s) => s.id)).toEqual(['b', 'a'])
+    expect(state.stickers[1]).toMatchObject({ x: 0.2, y: 1 })
+  })
+
   it('스티커 최대 개수를 넘지 않는다', () => {
     const actions: EditorAction[] = Array.from({ length: STICKER_LIMITS.maxCount + 5 }, (_, i) => ({
       type: 'addSticker',

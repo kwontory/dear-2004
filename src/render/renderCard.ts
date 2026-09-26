@@ -67,6 +67,26 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect, drawLabel: b
   ctx.fillText('[내 사진]', area.x + area.width / 2, area.y + area.height / 2)
 }
 
+/**
+ * 효과까지 입힌 사진 레이어 캐시. 스티커를 끌거나 글자를 칠 때마다 사진 효과(픽셀 계산)를
+ * 다시 하지 않도록, 같은 이미지·배치·효과·크기면 이전 결과를 재사용한다. 결과는 항상 같다.
+ */
+const photoLayerCache = new WeakMap<object, { key: string; layer: HTMLCanvasElement }>()
+
+function cachedPhotoLayer(
+  photo: LoadedPhoto,
+  state: EditorState,
+  area: Rect,
+  createCanvas: CanvasFactory,
+): HTMLCanvasElement {
+  const key = JSON.stringify([state.photo.transform, state.photo.effect, area.width, area.height])
+  const cached = photoLayerCache.get(photo.image)
+  if (cached && cached.key === key) return cached.layer
+  const layer = renderPhotoLayer(photo, state, area, createCanvas)
+  photoLayerCache.set(photo.image, { key, layer })
+  return layer
+}
+
 /** 사진 영역 크기의 캔버스에 사진을 배치·회전해 그리고 효과를 입힌다. */
 function renderPhotoLayer(
   photo: LoadedPhoto,
@@ -191,7 +211,7 @@ export function renderCard(
   ctx.fillRect(0, 0, layout.width, layout.height)
 
   if (photo) {
-    ctx.drawImage(renderPhotoLayer(photo, state, area, createCanvas), area.x, area.y)
+    ctx.drawImage(cachedPhotoLayer(photo, state, area, createCanvas), area.x, area.y)
   } else {
     drawPlaceholder(ctx, area, assets.fonts !== 'loading')
   }

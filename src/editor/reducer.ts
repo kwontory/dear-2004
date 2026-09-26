@@ -33,9 +33,10 @@ export type EditorAction =
   | { type: 'setText'; field: TextFieldKey; value: string }
   | { type: 'updateCounter'; patch: Partial<VisitCounter> }
   | { type: 'updateTheme'; patch: Partial<CardTheme> }
-  | { type: 'addSticker'; id: string; kind: StickerKind }
+  | { type: 'addSticker'; id: string; kind: StickerKind; x?: number; y?: number }
   | { type: 'updateSticker'; id: string; patch: Partial<Omit<Sticker, 'id'>> }
   | { type: 'removeSticker'; id: string }
+  | { type: 'bringStickerToFront'; id: string }
   | { type: 'addComment'; id: string }
   | { type: 'updateComment'; id: string; patch: Partial<Omit<CardComment, 'id'>> }
   | { type: 'removeComment'; id: string }
@@ -117,7 +118,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (state.stickers.some((s) => s.id === action.id)) return state
       return {
         ...state,
-        stickers: [...state.stickers, { id: action.id, kind: action.kind, ...NEW_STICKER_DEFAULTS }],
+        stickers: [
+          ...state.stickers,
+          clampSticker({
+            ...NEW_STICKER_DEFAULTS,
+            id: action.id,
+            kind: action.kind,
+            x: action.x ?? NEW_STICKER_DEFAULTS.x,
+            y: action.y ?? NEW_STICKER_DEFAULTS.y,
+          }),
+        ],
       }
 
     case 'updateSticker':
@@ -130,6 +140,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'removeSticker':
       return { ...state, stickers: state.stickers.filter((s) => s.id !== action.id) }
+
+    case 'bringStickerToFront': {
+      const target = state.stickers.find((s) => s.id === action.id)
+      if (!target) return state
+      return { ...state, stickers: [...state.stickers.filter((s) => s.id !== action.id), target] }
+    }
 
     case 'addComment':
       if (state.comments.length >= COMMENT_LIMITS.maxCount) return state

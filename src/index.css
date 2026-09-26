@@ -207,3 +207,7 @@ input:disabled + .retro-button,
   border-color: #1d5874;
   box-shadow: inset 1px 1px 0 #6fb0d0;
 }
+
+.retro-button-danger {
+  color: #a3264f;
+}
