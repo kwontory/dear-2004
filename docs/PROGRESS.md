@@ -8,7 +8,7 @@ Claude Code는 새 세션 시작 시 이 파일을 읽고
 
 ## Current Phase
 
-Core editor 구현 (문구 입력·렌더링 완료 → PNG/JPEG 다운로드부터)
+Core editor 구현 (PNG/JPEG 다운로드 완료 → 스티커 UI / 템플릿 CRUD부터)
 
 
 ## Completed
@@ -29,6 +29,7 @@ Core editor 구현 (문구 입력·렌더링 완료 → PNG/JPEG 다운로드부
 - [x] CardPreview: export와 같은 픽셀 크기로 그리고 CSS로만 축소 (preview == export 픽셀 동일 확인)
 - [x] 화면비 선택 UI, 사진 조절(확대·좌우·위아래·회전·초기화), 사진 효과 선택, 날짜 스탬프 켜기 + 날짜 입력
 - [x] 문구 입력 UI (제목, TODAY is.., 감성 문구, BGM, 서명, 특수문자 넣기, 방문자 수, 댓글) + 카드 본문·서명 렌더링
+- [x] PNG/JPEG 다운로드 (`src/export/exportCard.ts`, `ExportButtons`) — 미리보기와 같은 renderCard, PNG 픽셀 완전 일치
 - [x] Galmuri 폰트 self-host (`public/fonts`, OFL) + 모바일 사용자 글꼴·큰 글자 대응
 - [x] 디자인 시안 (Claude Design canvas): (비공개 디자인 캔버스)
 
@@ -53,7 +54,7 @@ Core editor 구현 (문구 입력·렌더링 완료 → PNG/JPEG 다운로드부
 9. ~~텍스트 입력 구현~~ (완료. 카드에는 memo 틀 기준 본문·서명만 그림. 제목·BGM·댓글 등은 틀별 레이아웃에서)
 10. 레트로 미니홈피 테마 구현
 11. 스티커 구현 — 원본 에셋·렌더러 완료, 추가/선택/드래그 UI 남음
-12. PNG/JPEG 다운로드 구현
+12. ~~PNG/JPEG 다운로드 구현~~ (완료)
 13. 사용자 템플릿 CRUD 구현
 14. browser persistence 구현
 15. JSON export/import 구현
@@ -139,6 +140,14 @@ LLM 또는 AI 기능은 핵심 요구사항이 아니다.
 - 알 수 없는 추가 필드 → 제거
 
 
+### 15. Export
+
+- `renderCardToCanvas`: 분리 캔버스 + `renderCard` (미리보기와 같은 함수). `loadCardAssets`로 폰트·사진·스티커 로드 완료를 기다린다
+- PNG: 투명도 유지 / JPEG: 품질 0.92, 흰 바탕(#fff) 먼저 칠함
+- 파일 이름 `dear2004-<1x1|4x5|9x16>-<yyyymmdd>-<hhmmss>.<png|jpg>` — 사용자 입력은 넣지 않는다
+- 다운로드: Blob URL + `a[download]`, 30초 뒤 URL 해제
+
+
 ### 14. 폰트와 모바일 글꼴 대응
 
 - 폰트: Galmuri11 / Galmuri11 Bold / Galmuri9 (v2.40.3, SIL OFL 1.1) → `public/fonts/`, 라이선스 `Galmuri-OFL.md`
@@ -196,6 +205,7 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
   Galmuri11은 12px 배수, Galmuri9은 10px 배수에서 선명하다. self-host 가능 → Canvas export에도 사용.
 - 편집기 화면 제목 표기: **그땐 그랬지,,** (사용자가 시안에서 직접 수정. 상단 부제 문구는 삭제)
   → 브라우저 탭 제목(`index.html`)과 앱 상단(`App.tsx`)에 반영 완료
+- 4:5 미니홈피 카드 배경: 구름 → **파스텔 그라데이션** `linear-gradient(160deg, #c9e0f6, #e3dbf5 50%, #fadbe7)` (사용자 요청)
 - 편집기: **잿빛 하늘색(#c3ced6) 단색 배경** 위의 **바인더 노트** (회색-파랑 도트 테두리, 스프링 고리, 흰 좌/우 페이지),
   오른쪽 **인덱스 탭**(사진 / 문구 / 꾸미기 / 템플릿)으로 왼쪽 페이지 내용 전환, 오른쪽 페이지는 미리보기+저장.
 - 옛날 웹 컨트롤: 회색 입체 버튼, 1px 입력칸, 점선 구분선, "■ 제목" 섹션 헤더, 밑줄 텍스트 링크.
@@ -244,7 +254,9 @@ v2는 실제 2000년대 문법을 따른다. 단, 싸이월드 로고·명칭·�
 
 ```text
 build: PASS
-automated tests: PASS (121 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+automated tests: PASS (124 tests — EditorState / reducer / text / upload / render / slider / sticker manifest / 줄바꿈)
+browser export flow: PASS (23 시나리오) — TC-28/29/30 세 화면비 PNG·JPEG 크기, PNG == 미리보기 픽셀 완전 일치,
+  JPEG 평균 오차 < 2, TC-10 투명 PNG 사진 → JPEG 흰 바탕, 파일 이름 규칙, 콘솔 에러 없음
 browser text flow: PASS (21 시나리오) — TC-11~16 (빈 문구, 1000자 제한 + … 처리, 줄바꿈 400개, 이모지,
   `<script>`·onerror 미실행, 혼합 문자열), 커서 위치 특수문자 삽입, 댓글 5개 제한·삭제, 방문자 수 음수 보정,
   모바일 360px 가로 넘침 없음, 입력칸 16px, 사용자 글꼴·큰 글자 강제 시에도 레이아웃 유지·카드 픽셀 동일
@@ -273,8 +285,9 @@ dependency를 늘리지 않기 위해 아직 저장소에 넣지 않았다. E2E�
 
 ### Next action
 
-- PNG/JPEG 다운로드: 같은 renderCard를 분리 캔버스에 그리고 `document.fonts`·사진·스티커 로드를 기다린 뒤 toBlob
-- 그다음: 스티커 추가·선택·드래그 UI, 사용자 템플릿 CRUD
+- 스티커 추가·선택·드래그 UI
+- 사용자 템플릿 CRUD + browser persistence (사진 data URL 용량 때문에 IndexedDB 우선 검토)
+- JSON export/import UI (검증 로직은 완료)
 
 ### Verification
 
