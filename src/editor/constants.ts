@@ -1,3 +1,5 @@
+import { STICKER_ASSETS } from './stickerAssets'
+
 /**
  * EditorState 관련 상수의 단일 출처.
  * 타입(types.ts), 기본값(defaults.ts), 검증(validate.ts)이 모두 여기서 파생된다.
@@ -18,13 +20,8 @@ export const BACKGROUND_IDS = ['sky-dots', 'pink-check', 'cream-diary', 'pastel-
 
 export const FRAME_IDS = ['minihome', 'diary', 'album', 'memo'] as const
 
-/** 도트 스티커 모양. 격자는 src/render/pixelStickers.ts */
-export const STICKER_KINDS = [
-  'heart', 'star', 'sparkle', 'bow', 'flower', 'moon', 'cherry', 'wingheart',
-] as const
-
-/** 스티커 색: 연핑크 / 연하늘 / 연보라 / 은색 */
-export const STICKER_TINTS = ['pink', 'blue', 'lavender', 'silver'] as const
+/** 스티커 종류 = 스티커 에셋 id (src/editor/stickerAssets.ts) */
+export const STICKER_KINDS = STICKER_ASSETS.map((asset) => asset.id)
 
 /** original=원본, soft=뽀샤시, faded=빛바램, mono=흑백 */
 export const PHOTO_EFFECTS = ['original', 'soft', 'faded', 'mono'] as const

@@ -1,15 +1,22 @@
-import type { EditorState } from '../editor/types'
+import type { EditorState, StickerKind } from '../editor/types'
 import { drawDateStamp, formatStampText } from './dateStamp'
 import { computeLayout, type Rect } from './layout'
 import { applyColorEffect, EFFECT_PARAMS } from './photoEffects'
 import { computePhotoPlacement } from './photoPlacement'
-import { buildStickerPixels, paintStickerArt } from './pixelStickers'
 
-/** 디코딩이 끝난 사진. HTMLImageElement나 ImageBitmap 모두 가능 */
-export interface LoadedPhoto {
+/** 디코딩이 끝난 이미지. HTMLImageElement나 ImageBitmap 모두 가능 */
+export interface LoadedImage {
   image: CanvasImageSource
   width: number
   height: number
+}
+
+export type LoadedPhoto = LoadedImage
+
+/** renderCard가 그리는 데 필요한, 미리 디코딩된 이미지들 */
+export interface CardAssets {
+  photo: LoadedPhoto | null
+  stickers: ReadonlyMap<StickerKind, LoadedImage>
 }
 
 export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement
@@ -98,29 +105,26 @@ function renderPhotoLayer(
 }
 
 /**
- * 스티커: 1칸=1px로 그린 뒤 smoothing 없이 확대해 도트 경계를 선명하게 유지한다.
- * size = 카드 너비 대비 스티커 너비, (x, y) = 카드 대비 중심 좌표
+ * 스티커: 원본 도트 이미지를 smoothing 없이 확대해 픽셀 경계를 유지한다.
+ * size = 카드 너비 대비 스티커 너비, (x, y) = 카드 대비 중심 좌표.
+ * 아직 불러오지 못한 스티커는 건너뛴다 (불러오면 다시 그린다).
  */
 function drawStickers(
   ctx: CanvasRenderingContext2D,
   state: EditorState,
   layout: { width: number; height: number },
-  createCanvas: CanvasFactory,
+  images: CardAssets['stickers'],
 ): void {
   for (const sticker of state.stickers) {
-    const art = buildStickerPixels(sticker.kind, sticker.tint)
-    const sprite = createCanvas(art.width, art.height)
-    const spriteCtx = sprite.getContext('2d')
-    if (!spriteCtx) continue
-    paintStickerArt(spriteCtx, art)
-
+    const image = images.get(sticker.kind)
+    if (!image) continue
     const drawWidth = sticker.size * layout.width
-    const drawHeight = (drawWidth * art.height) / art.width
+    const drawHeight = (drawWidth * image.height) / Math.max(1, image.width)
     ctx.save()
     ctx.translate(sticker.x * layout.width, sticker.y * layout.height)
     ctx.rotate((sticker.rotation * Math.PI) / 180)
     ctx.imageSmoothingEnabled = false
-    ctx.drawImage(sprite, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight)
+    ctx.drawImage(image.image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight)
     ctx.restore()
   }
 }
@@ -132,9 +136,10 @@ function drawStickers(
 export function renderCard(
   ctx: CanvasRenderingContext2D,
   state: EditorState,
-  photo: LoadedPhoto | null,
+  assets: CardAssets,
   createCanvas: CanvasFactory = defaultCanvasFactory,
 ): void {
+  const { photo } = assets
   const layout = computeLayout(state.aspectRatio, state.theme.frame)
   const area = layout.photo
 
@@ -163,6 +168,6 @@ export function renderCard(
     )
   }
 
-  drawStickers(ctx, state, layout, createCanvas)
+  drawStickers(ctx, state, layout, assets.stickers)
   ctx.restore()
 }

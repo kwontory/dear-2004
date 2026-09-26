@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { EditorState } from '../editor/types'
 import { computeLayout } from '../render/layout'
-import { renderCard, type LoadedPhoto } from '../render/renderCard'
+import { renderCard, type CardAssets } from '../render/renderCard'
 import './CardPreview.css'
 
 const PREVIEW_MAX_WIDTH = 540
@@ -9,21 +9,21 @@ const PREVIEW_MAX_VIEWPORT_HEIGHT = 72
 
 interface CardPreviewProps {
   state: EditorState
-  photo: LoadedPhoto | null
+  assets: CardAssets
 }
 
 /**
  * 미리보기 캔버스는 export와 같은 픽셀 크기로 그리고 CSS로만 축소한다.
  * 그래서 화면과 다운로드 결과가 픽셀 단위로 같다.
  */
-export function CardPreview({ state, photo }: CardPreviewProps) {
+export function CardPreview({ state, assets }: CardPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { width, height } = computeLayout(state.aspectRatio, state.theme.frame)
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')
-    if (ctx) renderCard(ctx, state, photo)
-  }, [state, photo, width, height])
+    if (ctx) renderCard(ctx, state, assets)
+  }, [state, assets, width, height])
 
   return (
     <div

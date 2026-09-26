@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useMemo, useReducer } from 'react'
 import './App.css'
 import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
@@ -7,10 +7,13 @@ import { PhotoUpload } from './components/PhotoUpload'
 import { createDefaultEditorState } from './editor/defaults'
 import { editorReducer } from './editor/reducer'
 import { useLoadedPhoto } from './hooks/useLoadedPhoto'
+import { useStickerImages } from './hooks/useStickerImages'
 
 function App() {
   const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
   const photo = useLoadedPhoto(state.photo.source)
+  const stickerImages = useStickerImages(state.stickers)
+  const assets = useMemo(() => ({ photo, stickers: stickerImages }), [photo, stickerImages])
 
   return (
     <div className="app">
@@ -62,7 +65,7 @@ function App() {
 
         <section className="panel panel-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading" className="panel-title">미리보기</h2>
-          <CardPreview state={state} photo={photo} />
+          <CardPreview state={state} assets={assets} />
         </section>
       </main>
 
