@@ -1,6 +1,8 @@
 import type { EditorState, StickerKind } from '../editor/types'
 import { drawDateStamp, formatStampText } from './dateStamp'
-import { computeLayout, type Rect } from './layout'
+import { cardFont } from './fonts'
+import { wrapText } from './textLayout'
+import { computeLayout, type CardLayout, type Rect } from './layout'
 import { applyColorEffect, EFFECT_PARAMS } from './photoEffects'
 import { computePhotoPlacement } from './photoPlacement'
 
@@ -13,10 +15,17 @@ export interface LoadedImage {
 
 export type LoadedPhoto = LoadedImage
 
-/** renderCard가 그리는 데 필요한, 미리 디코딩된 이미지들 */
+/**
+ * 폰트 상태. loading 동안에는 글자를 그리지 않는다 (다른 글꼴로 줄바꿈이 틀어지는 것 방지).
+ * failed면 대체 글꼴로 그리고 UI에서 알린다.
+ */
+export type FontStatus = 'loading' | 'ready' | 'failed'
+
+/** renderCard가 그리는 데 필요한, 미리 준비된 자원들 */
 export interface CardAssets {
   photo: LoadedPhoto | null
   stickers: ReadonlyMap<StickerKind, LoadedImage>
+  fonts: FontStatus
 }
 
 export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement
@@ -30,6 +39,8 @@ const defaultCanvasFactory: CanvasFactory = (width, height) => {
 
 const COLORS = {
   memoBackground: '#ffffff',
+  bodyText: '#6b6b6b',
+  signatureText: '#8a8a8a',
   placeholderTop: '#b9c8d8',
   placeholderMiddle: '#d9d3d6',
   placeholderBottom: '#efe4da',
@@ -40,7 +51,7 @@ const COLORS = {
 const STAMP_DIGIT_HEIGHT_RATIO = 0.024
 const STAMP_MARGIN_RATIO = { right: 0.022, bottom: 0.016 } as const
 
-function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect): void {
+function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect, drawLabel: boolean): void {
   const gradient = ctx.createLinearGradient(area.x, area.y, area.x + area.width * 0.4, area.y + area.height)
   gradient.addColorStop(0, COLORS.placeholderTop)
   gradient.addColorStop(0.55, COLORS.placeholderMiddle)
@@ -48,8 +59,9 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, area: Rect): void {
   ctx.fillStyle = gradient
   ctx.fillRect(area.x, area.y, area.width, area.height)
 
+  if (!drawLabel) return
   ctx.fillStyle = COLORS.placeholderText
-  ctx.font = `${Math.round(area.width * 0.022)}px Galmuri11, monospace`
+  ctx.font = cardFont(24)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('[내 사진]', area.x + area.width / 2, area.y + area.height / 2)
@@ -104,6 +116,33 @@ function renderPhotoLayer(
   return layer
 }
 
+/** 감성 문구 본문과 서명. 줄바꿈은 실제 폰트의 measureText로 계산한다 */
+function drawMemoText(ctx: CanvasRenderingContext2D, state: EditorState, layout: CardLayout): void {
+  const measure = (text: string) => ctx.measureText(text).width
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+
+  const body = layout.body
+  if (state.text.body.trim() !== '') {
+    ctx.font = cardFont(body.fontSize)
+    ctx.fillStyle = COLORS.bodyText
+    const { lines } = wrapText(state.text.body, body.width, body.maxLines, measure)
+    // 픽셀 폰트가 번지지 않도록 정수 좌표에 찍는다
+    lines.forEach((line, i) => ctx.fillText(line, body.x, Math.round(body.y + i * body.lineHeight)))
+  }
+
+  const signature = state.text.signature.trim()
+  if (signature !== '') {
+    const sig = layout.signature
+    ctx.font = cardFont(sig.fontSize)
+    ctx.fillStyle = COLORS.signatureText
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'bottom'
+    const [line] = wrapText(`by. ${signature}`, sig.maxWidth, 1, measure).lines
+    ctx.fillText(line ?? '', sig.right, sig.bottom)
+  }
+}
+
 /**
  * 스티커: 원본 도트 이미지를 smoothing 없이 확대해 픽셀 경계를 유지한다.
  * size = 카드 너비 대비 스티커 너비, (x, y) = 카드 대비 중심 좌표.
@@ -154,7 +193,7 @@ export function renderCard(
   if (photo) {
     ctx.drawImage(renderPhotoLayer(photo, state, area, createCanvas), area.x, area.y)
   } else {
-    drawPlaceholder(ctx, area)
+    drawPlaceholder(ctx, area, assets.fonts !== 'loading')
   }
 
   const stampText = state.photo.showDateStamp ? formatStampText(state.text.date) : null
@@ -168,6 +207,7 @@ export function renderCard(
     )
   }
 
+  if (assets.fonts !== 'loading') drawMemoText(ctx, state, layout)
   drawStickers(ctx, state, layout, assets.stickers)
   ctx.restore()
 }

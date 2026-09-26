@@ -4,8 +4,10 @@ import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { CardPreview } from './components/CardPreview'
 import { PhotoAdjust, PhotoEffectSelector } from './components/PhotoControls'
 import { PhotoUpload } from './components/PhotoUpload'
+import { TextControls } from './components/TextControls'
 import { createDefaultEditorState } from './editor/defaults'
 import { editorReducer } from './editor/reducer'
+import { useCardFonts } from './hooks/useCardFonts'
 import { useLoadedPhoto } from './hooks/useLoadedPhoto'
 import { useStickerImages } from './hooks/useStickerImages'
 
@@ -13,7 +15,8 @@ function App() {
   const [state, dispatch] = useReducer(editorReducer, undefined, createDefaultEditorState)
   const photo = useLoadedPhoto(state.photo.source)
   const stickerImages = useStickerImages(state.stickers)
-  const assets = useMemo(() => ({ photo, stickers: stickerImages }), [photo, stickerImages])
+  const fonts = useCardFonts()
+  const assets = useMemo(() => ({ photo, stickers: stickerImages, fonts }), [photo, stickerImages, fonts])
 
   return (
     <div className="app">
@@ -61,11 +64,21 @@ function App() {
             <h3 id="effect-heading" className="control-section-title">■ 사진 효과</h3>
             <PhotoEffectSelector photo={state.photo} date={state.text.date} dispatch={dispatch} />
           </section>
+
+          <section className="control-section" aria-labelledby="text-heading">
+            <h3 id="text-heading" className="control-section-title">■ 문구 쓰기</h3>
+            <TextControls state={state} dispatch={dispatch} />
+          </section>
         </section>
 
         <section className="panel panel-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading" className="panel-title">미리보기</h2>
           <CardPreview state={state} assets={assets} />
+          {fonts === 'failed' && (
+            <p role="status" className="control-hint font-warning">
+              ※ 픽셀 글꼴을 불러오지 못해 기본 글꼴로 보여요. 새로고침하면 다시 시도해요.
+            </p>
+          )}
         </section>
       </main>
 
