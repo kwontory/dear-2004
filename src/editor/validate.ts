@@ -2,6 +2,8 @@ import {
   ASPECT_RATIOS,
   BACKGROUND_IDS,
   COMMENT_LIMITS,
+  DEFAULT_SOLID_COLOR,
+  HEX_COLOR_PATTERN,
   FRAME_IDS,
   PHOTO_EFFECTS,
   PHOTO_SOURCE_LIMITS,
@@ -183,6 +185,13 @@ function readComments(value: unknown, path: string): CardComment[] {
   })
 }
 
+/** 단색 스킨 이전에 저장한 템플릿·JSON에는 없으므로, 없으면 기본색. 있으면 #rrggbb여야 한다 */
+function readSolidColor(value: unknown, path: string): string {
+  if (value === undefined) return DEFAULT_SOLID_COLOR
+  if (typeof value !== 'string' || !HEX_COLOR_PATTERN.test(value)) fail(path, '#rrggbb 형식의 색이어야 합니다')
+  return value.toLowerCase()
+}
+
 /** 이미 파싱된 값(unknown)을 EditorState로 검증한다. 예외를 밖으로 던지지 않는다. */
 export function validateEditorState(value: unknown): ParseResult {
   try {
@@ -206,6 +215,7 @@ export function validateEditorState(value: unknown): ParseResult {
         theme: {
           background: readEnum(theme.background, 'theme.background', BACKGROUND_IDS),
           frame: readEnum(theme.frame, 'theme.frame', FRAME_IDS),
+          solidColor: readSolidColor(theme.solidColor, 'theme.solidColor'),
         },
         stickers: readStickers(root.stickers, 'stickers'),
         comments: readComments(root.comments, 'comments'),

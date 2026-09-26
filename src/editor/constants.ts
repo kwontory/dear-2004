@@ -16,7 +16,24 @@ export const CANVAS_SIZES = {
   '9:16': { width: 1080, height: 1920 },
 } as const satisfies Record<(typeof ASPECT_RATIOS)[number], { width: number; height: number }>
 
-export const BACKGROUND_IDS = ['sky-dots', 'pink-check', 'cream-diary', 'pastel-gradient'] as const
+/** solid = 사용자가 고른 단색 (theme.solidColor) */
+export const BACKGROUND_IDS = ['sky-dots', 'pink-check', 'cream-diary', 'pastel-gradient', 'solid'] as const
+
+/** 단색 스킨 기본색과 형식 (#rrggbb 소문자) */
+export const DEFAULT_SOLID_COLOR = '#f7d6e0'
+export const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
+
+/** 단색 스킨 팔레트의 빠른 선택 색 */
+export const SOLID_COLOR_PRESETS = [
+  { hex: '#f7d6e0', label: '연분홍' },
+  { hex: '#d6e9f8', label: '연하늘' },
+  { hex: '#e3dbf5', label: '연보라' },
+  { hex: '#fff4c2', label: '연노랑' },
+  { hex: '#d9f2e3', label: '연민트' },
+  { hex: '#ffffff', label: '흰색' },
+  { hex: '#c3ced6', label: '잿빛 하늘' },
+  { hex: '#2b2f3a', label: '밤하늘' },
+] as const
 
 export const FRAME_IDS = ['minihome', 'diary', 'album', 'memo'] as const
 

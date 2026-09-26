@@ -1,6 +1,9 @@
 import {
   ASPECT_RATIOS,
+  BACKGROUND_IDS,
   COMMENT_LIMITS,
+  FRAME_IDS,
+  HEX_COLOR_PATTERN,
   PHOTO_EFFECTS,
   STICKER_LIMITS,
   TEXT_MAX_LENGTHS,
@@ -110,8 +113,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }
     }
 
-    case 'updateTheme':
-      return { ...state, theme: { ...state.theme, ...action.patch } }
+    case 'updateTheme': {
+      const { background, frame, solidColor } = action.patch
+      // 잘못된 값은 무시하고 나머지만 반영한다
+      return {
+        ...state,
+        theme: {
+          background: background && BACKGROUND_IDS.includes(background) ? background : state.theme.background,
+          frame: frame && FRAME_IDS.includes(frame) ? frame : state.theme.frame,
+          solidColor: solidColor && HEX_COLOR_PATTERN.test(solidColor) ? solidColor.toLowerCase() : state.theme.solidColor,
+        },
+      }
+    }
 
     case 'addSticker':
       if (state.stickers.length >= STICKER_LIMITS.maxCount) return state

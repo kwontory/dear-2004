@@ -55,6 +55,8 @@ export interface VisitCounter {
 export interface CardTheme {
   background: BackgroundId
   frame: FrameId
+  /** background가 'solid'일 때 쓰는 색 (#rrggbb) */
+  solidColor: string
 }
 
 /** x, y: 카드 크기 대비 중심 좌표(0~1), size: 카드 너비 대비 비율 */

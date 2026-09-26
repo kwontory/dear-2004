@@ -25,7 +25,7 @@ function fullState(): EditorState {
     showDateStamp: false,
   }
   state.text.body = '방학 첫날.\n떡볶이 😀✨'
-  state.theme = { background: 'pink-check', frame: 'diary' }
+  state.theme = { background: 'pink-check', frame: 'diary', solidColor: '#123abc' }
   state.stickers = [
     { id: 's1', kind: 'sparkle-blue', x: 0.1, y: 0.9, size: 0.12, rotation: -20 },
     { id: 's2', kind: 'heart-pink', x: 0.5, y: 0.5, size: 0.2, rotation: 0 },
@@ -149,6 +149,22 @@ describe('잘못된 JSON 거부 (TC-25 ~ TC-27)', () => {
     expectRejected(mutated((raw) => { raw.stickers[0].kind = 'wingheart' }), 'stickers[0].kind')
     expectRejected(mutated((raw) => { raw.stickers[1].id = 's1' }), '중복')
     expectRejected(mutated((raw) => { raw.stickers[0].id = '' }), 'stickers[0].id')
+  })
+})
+
+describe('단색 스킨 색', () => {
+  it('없으면 기본색으로 채운다 (단색 스킨 이전에 저장한 데이터)', () => {
+    const result = validateEditorState(mutated((raw) => { delete raw.theme.solidColor }))
+    expect(result.ok && result.state.theme.solidColor).toBe('#f7d6e0')
+  })
+
+  it('대문자는 소문자로 맞춘다', () => {
+    const result = validateEditorState(mutated((raw) => { raw.theme.background = 'solid'; raw.theme.solidColor = '#AABBCC' }))
+    expect(result.ok && result.state.theme).toMatchObject({ background: 'solid', solidColor: '#aabbcc' })
+  })
+
+  it.each(['red', '#fff', '#12345g', 123, null, 'url(javascript:alert(1))'])('잘못된 색 %s 거부', (color) => {
+    expectRejected(mutated((raw) => { raw.theme.solidColor = color }), 'theme.solidColor')
   })
 })
 

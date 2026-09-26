@@ -1,7 +1,8 @@
-import type { BackgroundId, EditorState } from '../editor/types'
+import type { CardTheme, EditorState } from '../editor/types'
 import { cardFont, FONT_FAMILIES } from './fonts'
 import type { AlbumLayout, CardLayout, DiaryLayout, MemoLayout, MinihomeLayout, Rect } from './layout'
 import { TYPE } from './layout'
+import { darken } from './skins'
 import { wrapText } from './textLayout'
 
 /**
@@ -28,6 +29,9 @@ export const FRAME_COLORS = {
   bgmBorder: '#d4dde6',
   bgmFill: '#f5f8fb',
   paper: '#fffdf7',
+  polaroid: '#fffefa',
+  polaroidShadow: 'rgba(80, 70, 110, 0.22)',
+  polaroidEdge: 'rgba(0, 0, 0, 0.05)',
   rule: '#eadbb4',
   margin: '#f3a6b8',
   tape: 'rgba(255, 224, 138, 0.75)',
@@ -35,11 +39,18 @@ export const FRAME_COLORS = {
 } as const
 
 /** 스킨에 어울리는 패널 테두리 색 */
-const SKIN_ACCENT: Record<BackgroundId, string> = {
+const SKIN_ACCENT = {
   'sky-dots': '#9fc3e7',
   'pink-check': '#e4b3c4',
   'cream-diary': '#d8c59a',
   'pastel-gradient': '#c9b8e8',
+} as const
+
+/** 단색 스킨은 고른 색을 조금 어둡게 한 색을 테두리로 쓴다 */
+const SOLID_ACCENT_DARKEN = 0.22
+
+function skinAccent(theme: CardTheme): string {
+  return theme.background === 'solid' ? darken(theme.solidColor, SOLID_ACCENT_DARKEN) : SKIN_ACCENT[theme.background]
 }
 
 const MINIHOME_TABS = ['홈', '다이어리', '사진첩', '방명록'] as const
@@ -160,9 +171,19 @@ function commentRuns(author: string, text: string) {
 
 // ── 감성 사진 (memo) ────────────────────────────────────────
 
-function memoBase(ctx: CanvasRenderingContext2D, layout: MemoLayout & { width: number; height: number }): void {
-  ctx.fillStyle = FRAME_COLORS.white
-  ctx.fillRect(0, 0, layout.width, layout.height)
+/** 폴라로이드: 스킨 위에 그림자를 드리운 흰 인화지 */
+function memoBase(ctx: CanvasRenderingContext2D, layout: MemoLayout): void {
+  const r = layout.polaroid
+  ctx.save()
+  ctx.shadowColor = FRAME_COLORS.polaroidShadow
+  ctx.shadowBlur = 28
+  ctx.shadowOffsetY = 12
+  ctx.fillStyle = FRAME_COLORS.polaroid
+  ctx.fillRect(r.x, r.y, r.width, r.height)
+  ctx.restore()
+  // 인화지 윗면의 아주 옅은 선 (시안 box-shadow 0 2px 0)
+  ctx.fillStyle = FRAME_COLORS.polaroidEdge
+  ctx.fillRect(r.x, r.y + r.height, r.width, 4)
 }
 
 function memoText(ctx: CanvasRenderingContext2D, state: EditorState, layout: MemoLayout): void {
@@ -277,7 +298,7 @@ function minihomeText(ctx: CanvasRenderingContext2D, state: EditorState, layout:
 // ── 사진첩 (album) ──────────────────────────────────────────
 
 function albumBase(ctx: CanvasRenderingContext2D, state: EditorState, layout: AlbumLayout): void {
-  const accent = SKIN_ACCENT[state.theme.background]
+  const accent = skinAccent(state.theme)
   panel(ctx, layout.topBar, FRAME_COLORS.white, accent, 8)
   panel(ctx, layout.panel, FRAME_COLORS.white, accent, 12)
   panel(ctx, layout.photoBox, FRAME_COLORS.white, FRAME_COLORS.photoBorder, 0)
@@ -336,7 +357,7 @@ function albumText(ctx: CanvasRenderingContext2D, state: EditorState, layout: Al
 
 function diaryBase(ctx: CanvasRenderingContext2D, state: EditorState, layout: DiaryLayout): void {
   const { paper } = layout
-  panel(ctx, paper, FRAME_COLORS.paper, SKIN_ACCENT[state.theme.background], 12)
+  panel(ctx, paper, FRAME_COLORS.paper, skinAccent(state.theme), 12)
   ctx.save()
   roundRectPath(ctx, paper, 12)
   ctx.clip()

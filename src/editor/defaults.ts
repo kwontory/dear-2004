@@ -1,4 +1,4 @@
-import { SCHEMA_VERSION } from './constants'
+import { DEFAULT_SOLID_COLOR, SCHEMA_VERSION } from './constants'
 import type { EditorState, PhotoTransform } from './types'
 
 export function createDefaultPhotoTransform(): PhotoTransform {
@@ -32,6 +32,7 @@ export function createDefaultEditorState(): EditorState {
     theme: {
       background: 'pastel-gradient',
       frame: 'memo',
+      solidColor: DEFAULT_SOLID_COLOR,
     },
     stickers: [],
     comments: [],

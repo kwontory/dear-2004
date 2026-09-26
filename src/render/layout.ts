@@ -32,6 +32,8 @@ export const TYPE = {
 
 export interface MemoLayout {
   frame: 'memo'
+  /** 폴라로이드 흰 테두리 */
+  polaroid: Rect
   photo: Rect
   body: Rect & { maxLines: number }
   signature: { right: number; bottom: number; maxWidth: number }
@@ -95,25 +97,45 @@ export type CardLayout = FrameLayout & {
   stampHeight: number
 }
 
-/** 시안 1:1 카드(540px)에서 사진 높이 318px → 0.589 */
-const MEMO_PHOTO_HEIGHT_RATIO: Record<AspectRatio, number> = { '1:1': 318 / 540, '4:5': 0.62, '9:16': 0.6 }
+/**
+ * 감성 사진 = 폴라로이드 (시안 CardSquare: 540px 카드에 폴라로이드 452×488, 여백 18, 사진 416×312).
+ * 위·옆 여백은 같고, 아래 넓은 여백에 문구와 서명을 쓴다.
+ */
+const POLAROID = {
+  insetX: 88,
+  insetY: 52,
+  pad: 36,
+  /** 폴라로이드 안쪽 높이 중 사진이 차지하는 비율 (시안 624 / 940) */
+  photoRatio: 0.664,
+  textGap: 32,
+  signatureRight: 44,
+  signatureBottom: 32,
+} as const
 
-function memoLayout(width: number, height: number, ratio: AspectRatio): MemoLayout {
-  const photoHeight = Math.round(height * MEMO_PHOTO_HEIGHT_RATIO[ratio])
-  const padX = 68
-  const top = photoHeight + 52
-  const bottom = height - 44 - TYPE.body - 20
+function memoLayout(width: number, height: number): MemoLayout {
+  const p = POLAROID
+  const polaroid = { x: p.insetX, y: p.insetY, width: width - p.insetX * 2, height: height - p.insetY * 2 }
+  const photo = {
+    x: polaroid.x + p.pad,
+    y: polaroid.y + p.pad,
+    width: polaroid.width - p.pad * 2,
+    height: Math.round((polaroid.height - p.pad) * p.photoRatio),
+  }
+  const top = photo.y + photo.height + p.textGap
+  const signatureBottom = polaroid.y + polaroid.height - p.signatureBottom
+  const bottom = signatureBottom - TYPE.body - 16
   return {
     frame: 'memo',
-    photo: { x: 0, y: 0, width, height: photoHeight },
+    polaroid,
+    photo,
     body: {
-      x: padX,
+      x: photo.x + 16,
       y: top,
-      width: width - padX * 2,
+      width: photo.width - 32,
       height: bottom - top,
       maxLines: Math.max(1, Math.floor((bottom - top) / TYPE.lineHeight)),
     },
-    signature: { right: width - 60, bottom: height - 44, maxWidth: Math.round(width * 0.5) },
+    signature: { right: polaroid.x + polaroid.width - p.signatureRight, bottom: signatureBottom, maxWidth: Math.round(polaroid.width * 0.6) },
   }
 }
 
@@ -277,7 +299,7 @@ export function computeLayout(state: EditorState): CardLayout {
       frame = diaryLayout(width, height)
       break
     default:
-      frame = memoLayout(width, height, state.aspectRatio)
+      frame = memoLayout(width, height)
   }
   // 숫자 높이: 사진 너비의 3%, 14~26px
   const stampHeight = Math.round(Math.min(26, Math.max(14, frame.photo.width * 0.03)))

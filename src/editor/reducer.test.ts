@@ -141,6 +141,14 @@ describe('editorReducer', () => {
     expect(run(actions).comments).toHaveLength(COMMENT_LIMITS.maxCount)
   })
 
+  it('테마: 단색 색 지정 / 잘못된 값은 무시', () => {
+    let state = run([{ type: 'updateTheme', patch: { background: 'solid', solidColor: '#ABCDEF' } }])
+    expect(state.theme).toMatchObject({ background: 'solid', solidColor: '#abcdef' })
+    state = run([{ type: 'updateTheme', patch: { solidColor: 'blue', frame: 'nope' as never } }], state)
+    expect(state.theme).toMatchObject({ background: 'solid', solidColor: '#abcdef', frame: 'memo' })
+    expectValid(state)
+  })
+
   it('원본 상태를 변경하지 않는다', () => {
     const state = createDefaultEditorState()
     const snapshot = structuredClone(state)

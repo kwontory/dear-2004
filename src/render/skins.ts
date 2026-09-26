@@ -1,4 +1,4 @@
-import type { BackgroundId } from '../editor/types'
+import type { BackgroundId, CardTheme } from '../editor/types'
 
 /**
  * 카드 배경(스킨). 시안의 CSS 패턴을 캔버스로 옮겼다 (시안 540px × 2 = export 1080px).
@@ -16,6 +16,14 @@ export const SKIN_LABELS: Record<BackgroundId, string> = {
   'pink-check': '핑크 체크',
   'cream-diary': '크림 줄노트',
   'pastel-gradient': '파스텔',
+  solid: '단색',
+}
+
+/** #rrggbb를 amount(0~1)만큼 검게 */
+export function darken(hex: string, amount: number): string {
+  const n = Number.parseInt(hex.slice(1), 16)
+  const channel = (shift: number) => Math.round(((n >> shift) & 0xff) * (1 - amount))
+  return `#${[16, 8, 0].map((s) => channel(s).toString(16).padStart(2, '0')).join('')}`
 }
 
 const DOT_GRID = 24
@@ -25,9 +33,14 @@ const RULE = 28
 /** CSS linear-gradient(160deg, ...) 와 같은 방향 */
 const GRADIENT_DEG = 160
 
-export function drawSkin(ctx: CanvasRenderingContext2D, skin: BackgroundId, width: number, height: number): void {
+export function drawSkin(ctx: CanvasRenderingContext2D, theme: CardTheme, width: number, height: number): void {
   ctx.save()
-  switch (skin) {
+  switch (theme.background) {
+    case 'solid': {
+      ctx.fillStyle = theme.solidColor
+      ctx.fillRect(0, 0, width, height)
+      break
+    }
     case 'sky-dots': {
       const c = SKIN_COLORS['sky-dots']
       ctx.fillStyle = c.base

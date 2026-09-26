@@ -196,7 +196,6 @@ function App() {
               </Section>
               <Section id="skin-heading" title="스킨">
                 <SkinSelector theme={state.theme} dispatch={dispatch} />
-                {state.theme.frame === 'memo' && <p className="control-hint">감성 사진 틀은 흰 바탕이라 스킨이 보이지 않아요.</p>}
               </Section>
               <Section
                 id="sticker-heading"

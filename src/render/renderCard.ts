@@ -218,7 +218,7 @@ export function renderCard(
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
   // JPEG export에서도 투명 영역이 검게 나오지 않도록 항상 배경을 먼저 칠한다
-  drawSkin(ctx, state.theme.background, layout.width, layout.height)
+  drawSkin(ctx, state.theme, layout.width, layout.height)
   drawFrameBase(ctx, state, layout)
 
   const stampText = state.photo.showDateStamp ? formatStampText(state.text.date) : null

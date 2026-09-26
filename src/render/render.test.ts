@@ -160,3 +160,12 @@ describe('applyColorEffect', () => {
     }
   })
 })
+
+describe('darken (단색 스킨 테두리 색)', () => {
+  it('각 채널을 비율만큼 어둡게 한다', async () => {
+    const { darken } = await import('./skins')
+    expect(darken('#ffffff', 0.5)).toBe('#808080')
+    expect(darken('#2b2f3a', 0)).toBe('#2b2f3a')
+    expect(darken('#88cc44', 1)).toBe('#000000')
+  })
+})
