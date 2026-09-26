@@ -6,7 +6,7 @@ import { renderCard, type CardAssets } from '../render/renderCard'
 import './CardPreview.css'
 
 const PREVIEW_MAX_WIDTH = 540
-const PREVIEW_MAX_VIEWPORT_HEIGHT = 72
+const PREVIEW_MAX_VIEWPORT_HEIGHT = 62
 /** 손가락으로 잡기 쉽도록 스티커 판정 영역을 넓히는 정도 (카드 너비 대비) */
 const HIT_PADDING = { mouse: 0.005, touch: 0.025 } as const
 

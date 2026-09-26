@@ -17,14 +17,21 @@
 }
 
 :root {
-  --color-bg: #eef6ff;
-  --color-bg-dots: #d6e8fb;
+  /* 시안 색 (잿빛 하늘 배경 + 바인더) */
+  --color-bg: #c3ced6;
   --color-surface: #ffffff;
   --color-border: #9fc3e7;
-  --color-accent: #ff8fb8;
-  --color-accent-strong: #e0558d;
-  --color-text: #3a3a4a;
-  --color-text-muted: #7a7f95;
+  --color-text: #4a4a4a;
+  --color-text-muted: #767676;
+  --blue: #2a6db0;
+  --orange: #c75000;
+  --tab: #2f7fa8;
+  --tab-border: #22627f;
+  --binder: #a8b9c9;
+  --binder-dot: #dfe7ee;
+  --binder-border: #7f93a6;
+  --binder-ring-border: #6f8396;
+  --page-border: #c3ced8;
 
   --radius: 6px;
   --space-1: 4px;
@@ -33,15 +40,14 @@
   --space-4: 24px;
 
   font-family: 'dear2004-galmuri11', 'Dotum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  font-size: 14px;
+  /* Galmuri11은 12px 배수에서 선명하다 */
+  font-size: 12px;
   line-height: 1.5;
   /* 모바일 브라우저의 자동 글자 확대(font boosting) 방지. 사용자의 접근성 글자 크기 설정은 그대로 따른다 */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   color: var(--color-text);
   background-color: var(--color-bg);
-  background-image: radial-gradient(var(--color-bg-dots) 1.5px, transparent 1.5px);
-  background-size: 14px 14px;
 }
 
 *,
@@ -74,7 +80,7 @@ textarea {
   min-width: 0;
   min-height: 2.4em;
   padding: 4px 8px;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-text);
   background: #fff;
   border: 1px solid #a5a5a5;
@@ -118,7 +124,7 @@ p {
   min-height: 36px;
   padding: 4px 16px;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   color: #333;
@@ -166,7 +172,7 @@ input:disabled + .retro-button,
   gap: 4px;
   min-height: 40px;
   padding: 4px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-text);
   background: #fff;
   border: 1px solid #c3ced8;
